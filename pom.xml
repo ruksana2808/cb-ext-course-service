@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.igot</groupId>
-	<artifactId>cb-community-service</artifactId>
+	<artifactId>cb-ext-course-service/</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>cb-community-service</name>
-	<description>Community service project for igot</description>
+	<name>cb-ext-course-service/</name>
+	<description>Cb Ext Course service project for igot</description>
 	<url/>
 	<licenses>
 		<license/>
