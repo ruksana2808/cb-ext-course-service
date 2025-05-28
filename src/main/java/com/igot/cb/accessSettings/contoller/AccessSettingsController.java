@@ -21,6 +21,7 @@ public class AccessSettingsController {
   @Autowired
   private AccessSettingsService accessSettingsService;
 
+  //createand update API
   @PutMapping("/v1/upsert")
   public ResponseEntity<ApiResponse> upsert(@RequestBody Map<String, Object> userGroupDetails,
       @RequestHeader(Constants.X_AUTH_TOKEN) String authToken) {
