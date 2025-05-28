@@ -22,7 +22,7 @@ public class AccessSettingsController {
   private AccessSettingsService accessSettingsService;
 
   @PutMapping("/v1/upsert")
-  public ResponseEntity<ApiResponse> create(@RequestBody Map<String, Object> userGroupDetails,
+  public ResponseEntity<ApiResponse> upsert(@RequestBody Map<String, Object> userGroupDetails,
       @RequestHeader(Constants.X_AUTH_TOKEN) String authToken) {
     ApiResponse response = accessSettingsService.upsert(userGroupDetails, authToken);
     return new ResponseEntity<>(response, response.getResponseCode());

@@ -4,13 +4,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+@Slf4j
+@Service
 public class PayloadValidation {
 
 
-  private String validateAccessControlPayload(Map<String, Object> payload) {
+  public String validateAccessControlPayload(Map<String, Object> payload) {
     List<String> errList = new ArrayList<>();
 
     // Check contentId
