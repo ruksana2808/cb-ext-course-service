@@ -61,7 +61,7 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
       response.getResult().put(Constants.DATA, createPayloadWithUuid);
       return response;
     } catch (Exception e) {
-      logger.error("Error while upserting access settings: {}", e.getMessage(), e);
+      logger.error("Error while upserting access settings: {}",e);
       setFailedResponse(response, "Failed to create access settings: " + e.getMessage());
       return response;
     }
