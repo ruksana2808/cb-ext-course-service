@@ -2,7 +2,6 @@ package com.igot.cb.authentication.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.igot.cb.transactional.util.Constants;
 import com.igot.cb.transactional.util.PropertiesCache;
 import org.apache.commons.lang3.StringUtils;
@@ -97,10 +96,6 @@ public class AccessTokenValidator {
                     userId = userId.substring(userId.lastIndexOf(":") + 1);
                 }
             }
-            if (Constants.UNAUTHORIZED.equalsIgnoreCase(userId)) {
-                userId = null;
-            }
-
         } catch (Exception ex) {
             logger.error("Exception in verifyUserAccessToken: verify ", ex);
         }
