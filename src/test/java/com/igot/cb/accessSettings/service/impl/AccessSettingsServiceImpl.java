@@ -1,0 +1,147 @@
+package com.igot.cb.accessSettings.service.impl;
+
+
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.igot.cb.accessSettings.util.Constants;
+import com.igot.cb.accessSettings.util.PayloadValidation;
+import com.igot.cb.transactional.cassandrautils.CassandraOperation;
+import com.igot.cb.transactional.util.ApiResponse;
+import com.igot.cb.transactional.util.ProjectUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.*;
+import org.springframework.http.HttpStatus;
+
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+class AccessSettingsServiceImplTest {
+
+  @InjectMocks
+  private AccessSettingsServiceImpl service;
+
+  @Mock
+  private PayloadValidation payloadValidation;
+
+  @Mock
+  private CassandraOperation cassandraOperation;
+
+  @Spy
+  private ObjectMapper objectMapper = new ObjectMapper();
+
+  @BeforeEach
+  void setUp() {
+    MockitoAnnotations.openMocks(this);
+  }
+
+  @Test
+  void testUpsert_NullUserGroupDetails() {
+    ApiResponse response = service.upsert(null, "token");
+    assertEquals(HttpStatus.BAD_REQUEST, response.getResponseCode());
+    assertEquals(Constants.FAILED, response.getParams().getStatus());
+    assertTrue(response.getParams().getErrMsg().contains("cannot be null or empty"));
+  }
+
+  @Test
+  void testUpsert_EmptyUserGroupDetails() {
+    ApiResponse response = service.upsert(new HashMap<>(), "token");
+    assertEquals(HttpStatus.BAD_REQUEST, response.getResponseCode());
+    assertEquals(Constants.FAILED, response.getParams().getStatus());
+    assertTrue(response.getParams().getErrMsg().contains("cannot be null or empty"));
+  }
+
+  @Test
+  void testUpsert_ValidationError() {
+    // Make details non-empty so validation is triggered
+    Map<String, Object> details = new HashMap<>();
+    details.put(Constants.CONTENT_ID, "cid"); // or any dummy key
+    when(payloadValidation.validateAccessControlPayload(details)).thenReturn("validation error");
+    ApiResponse response = service.upsert(details, "token");
+    assertEquals(HttpStatus.BAD_REQUEST, response.getResponseCode());
+    assertEquals(Constants.FAILED, response.getParams().getStatus());
+    assertTrue(response.getParams().getErrMsg().contains("validation error"));
+  }
+
+  @Test
+  void testUpsert_Success() throws Exception {
+    Map<String, Object> details = new HashMap<>();
+    details.put(Constants.CONTENT_ID, "cid");
+    details.put(Constants.ACCESS_CONTROL, new HashMap<>());
+    when(payloadValidation.validateAccessControlPayload(details)).thenReturn("");
+    // insertRecord likely returns void or null; adjust as needed
+    when(cassandraOperation.insertRecord(anyString(), anyString(), anyMap())).thenReturn(null);
+
+    ApiResponse response = service.upsert(details, "token");
+    assertEquals(HttpStatus.OK, response.getResponseCode());
+    assertEquals(Constants.CREATED_RULES, response.getResult().get(Constants.MSG));
+    assertNotNull(response.getResult().get(Constants.DATA));
+  }
+
+  @Test
+  void testUpsert_Exception() throws Exception {
+    Map<String, Object> details = new HashMap<>();
+    details.put(Constants.CONTENT_ID, "cid");
+    details.put(Constants.ACCESS_CONTROL, new HashMap<>());
+    when(payloadValidation.validateAccessControlPayload(details)).thenReturn("");
+    doThrow(new RuntimeException("db error")).when(cassandraOperation).insertRecord(anyString(), anyString(), anyMap());
+
+    ApiResponse response = service.upsert(details, "token");
+    assertEquals(HttpStatus.BAD_REQUEST, response.getResponseCode());
+    assertEquals(Constants.FAILED, response.getParams().getStatus());
+    assertTrue(response.getParams().getErrMsg().contains("Failed to create access settings"));
+  }
+
+  @Test
+  void testCreateUserGroupIds_AddsUuid() {
+    Map<String, Object> userGroup = new HashMap<>();
+    userGroup.put(Constants.USER_GROUP_ID, null);
+    List<Map<String, Object>> userGroups = new ArrayList<>();
+    userGroups.add(userGroup);
+    Map<String, Object> accessControl = new HashMap<>();
+    accessControl.put(Constants.USER_GROUPS, userGroups);
+    Map<String, Object> payload = new HashMap<>();
+    payload.put(Constants.ACCESS_CONTROL, accessControl);
+
+    Map<String, Object> result = service.createUserGroupIds(payload);
+    List<Map<String, Object>> resultGroups = (List<Map<String, Object>>)
+            ((Map<String, Object>) result.get(Constants.ACCESS_CONTROL)).get(Constants.USER_GROUPS);
+    assertNotNull(resultGroups.get(0).get(Constants.USER_GROUP_ID));
+  }
+
+  @Test
+  void testCreateUserGroupIds_WithExistingId() {
+    Map<String, Object> userGroup = new HashMap<>();
+    userGroup.put(Constants.USER_GROUP_ID, "existing-id");
+    List<Map<String, Object>> userGroups = new ArrayList<>();
+    userGroups.add(userGroup);
+    Map<String, Object> accessControl = new HashMap<>();
+    accessControl.put(Constants.USER_GROUPS, userGroups);
+    Map<String, Object> payload = new HashMap<>();
+    payload.put(Constants.ACCESS_CONTROL, accessControl);
+
+    Map<String, Object> result = service.createUserGroupIds(payload);
+    List<Map<String, Object>> resultGroups = (List<Map<String, Object>>)
+            ((Map<String, Object>) result.get(Constants.ACCESS_CONTROL)).get(Constants.USER_GROUPS);
+    assertEquals("existing-id", resultGroups.get(0).get(Constants.USER_GROUP_ID));
+  }
+
+  @Test
+  void testCreateUserGroupIds_NoUserGroups() {
+    Map<String, Object> accessControl = new HashMap<>();
+    Map<String, Object> payload = new HashMap<>();
+    payload.put(Constants.ACCESS_CONTROL, accessControl);
+
+    Map<String, Object> result = service.createUserGroupIds(payload);
+    assertEquals(accessControl, result.get(Constants.ACCESS_CONTROL));
+  }
+
+  @Test
+  void testCreateUserGroupIds_NoAccessControl() {
+    Map<String, Object> payload = new HashMap<>();
+    Map<String, Object> result = service.createUserGroupIds(payload);
+    assertEquals(payload, result);
+  }
+}

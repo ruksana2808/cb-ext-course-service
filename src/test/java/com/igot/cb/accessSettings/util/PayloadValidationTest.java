@@ -2,11 +2,14 @@ package com.igot.cb.accessSettings.util;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.*;
 
 import static org.junit.Assert.*;
 
+@ExtendWith(MockitoExtension.class)
 public class PayloadValidationTest {
 
   private PayloadValidation payloadValidation;
