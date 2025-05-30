@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="5327dceb-c4a6-4dee-84af-de4407df0702" name="Changes" comment="Increased code coverage" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2xixhs0fFENM9yxJl6F8KWll2pI" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.CbExtCourseServiceApplication.executor": "Coverage",
+    "JUnit.AccessSettingsControllerTest.executor": "Coverage",
+    "JUnit.AccessTokenValidatorTest.executor": "Coverage",
+    "JUnit.Base64UtilTest.executor": "Coverage",
+    "JUnit.CassandraConnectionManagerImplTest.executor": "Coverage",
+    "JUnit.CassandraOperationImplTest.executor": "Coverage",
+    "JUnit.CassandraUtilTest.executor": "Coverage",
+    "JUnit.CbExtCourseServiceApplicationTest.executor": "Coverage",
+    "JUnit.CbExtCourseServiceApplicationTest.testMainMethod.executor": "Coverage",
+    "JUnit.CryptoUtilTest.executor": "Coverage",
+    "JUnit.CryptoUtilTest.test_verifyRSASign_validSignature.executor": "Coverage",
+    "JUnit.KeyManagerTest.executor": "Coverage",
+    "JUnit.PayloadValidationTest.executor": "Coverage",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/home/ruksanasemeir/projectData/cb-comment-service",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
+  }
+}]]></component>
+  <component name="RunManager" selected="JUnit.AccessTokenValidatorTest">
+    <configuration name="AccessSettingsControllerTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="cb-ext-course-service" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.igot.cb.accessSettings.contoller.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.igot.cb.accessSettings.controller" />
+      <option name="MAIN_CLASS_NAME" value="com.igot.cb.accessSettings.contoller.AccessSettingsControllerTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AccessTokenValidatorTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="cb-ext-course-service" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.igot.cb.authentication.util.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.igot.cb.authentication.util" />
+      <option name="MAIN_CLASS_NAME" value="com.igot.cb.authentication.util.AccessTokenValidatorTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="CassandraUtilTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="cb-ext-course-service" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.igot.cb.transactional.cassandrautils.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.igot.cb.transactional.cassandrautils" />
+      <option name="MAIN_CLASS_NAME" value="com.igot.cb.transactional.cassandrautils.CassandraUtilTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="CbExtCourseServiceApplicationTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="cb-ext-course-service" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.igot.cb.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.igot.cb" />
+      <option name="MAIN_CLASS_NAME" value="com.igot.cb.CbExtCourseServiceApplicationTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="PayloadValidationTest" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="cb-ext-course-service" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.igot.cb.accessSettings.util.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.igot.cb.accessSettings.util" />
+      <option name="MAIN_CLASS_NAME" value="com.igot.cb.accessSettings.util.PayloadValidationTest" />
+      <option name="TEST_OBJECT" value="class" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JUnit.AccessTokenValidatorTest" />
+        <item itemvalue="JUnit.CbExtCourseServiceApplicationTest" />
+        <item itemvalue="JUnit.AccessSettingsControllerTest" />
+        <item itemvalue="JUnit.PayloadValidationTest" />
+        <item itemvalue="JUnit.CassandraUtilTest" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="5327dceb-c4a6-4dee-84af-de4407df0702" name="Changes" comment="" />
+      <created>1748434817800</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1748434817800</updated>
+    </task>
+    <task id="LOCAL-00001" summary="Test push">
+      <option name="closed" value="true" />
+      <created>1748434927695</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1748434927695</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Modifieed logger">
+      <option name="closed" value="true" />
+      <created>1748497805664</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1748497805664</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Increased code coverage">
+      <option name="closed" value="true" />
+      <created>1748598750863</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1748598750863</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Increased code coverage">
+      <option name="closed" value="true" />
+      <created>1748598964381</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1748598964381</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
+    <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Test push" />
+    <MESSAGE value="Modifieed logger" />
+    <MESSAGE value="Increased code coverage" />
+    <option name="LAST_COMMIT_MESSAGE" value="Increased code coverage" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-method">
+          <url>file://$PROJECT_DIR$/src/test/java/com/igot/cb/authentication/util/CryptoUtilTest.java</url>
+          <line>49</line>
+          <properties class="com.igot.cb.authentication.util.CryptoUtilTest" method="test_verifyRSASign_validSignature">
+            <option name="EMULATED" value="true" />
+            <option name="WATCH_EXIT" value="false" />
+          </properties>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$CryptoUtilTest.ic" NAME="CryptoUtilTest Coverage Results" MODIFIED="1748596339820" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.authentication.util.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$CbExtCourseServiceApplication.ic" NAME="CbExtCourseServiceApplication Coverage Results" MODIFIED="1748592608131" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$CassandraUtilTest.ic" NAME="CassandraUtilTest Coverage Results" MODIFIED="1748596419058" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.transactional.cassandrautils.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$CassandraConnectionManagerImplTest.ic" NAME="CassandraConnectionManagerImplTest Coverage Results" MODIFIED="1748596379367" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.transactional.cassandrautils.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$KeyManagerTest.ic" NAME="KeyManagerTest Coverage Results" MODIFIED="1748596366298" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.authentication.util.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$CryptoUtilTest_test_verifyRSASign_validSignature.ic" NAME="CryptoUtilTest.test_verifyRSASign_validSignature Coverage Results" MODIFIED="1748591795727" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.authentication.util.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$PayloadValidationTest.ic" NAME="PayloadValidationTest Coverage Results" MODIFIED="1748597015284" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.accessSettings.util.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$CassandraOperationImplTest.ic" NAME="CassandraOperationImplTest Coverage Results" MODIFIED="1748596392986" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.transactional.cassandrautils.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$CbExtCourseServiceApplicationTest.ic" NAME="CbExtCourseServiceApplicationTest Coverage Results" MODIFIED="1748597505654" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$CbExtCourseServiceApplicationTest_testMainMethod.ic" NAME="CbExtCourseServiceApplicationTest.testMainMethod Coverage Results" MODIFIED="1748590719977" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$Base64UtilTest.ic" NAME="Base64UtilTest Coverage Results" MODIFIED="1748596353880" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.authentication.util.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$AccessTokenValidatorTest.ic" NAME="AccessTokenValidatorTest Coverage Results" MODIFIED="1748598662656" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.authentication.util.*</FILTER>
+    </SUITE>
+    <SUITE FILE_PATH="coverage/cb_ext_course_service$AccessSettingsControllerTest.ic" NAME="AccessSettingsControllerTest Coverage Results" MODIFIED="1748597457644" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="true">
+      <FILTER>com.igot.cb.accessSettings.contoller.*</FILTER>
+    </SUITE>
+  </component>
+</project>
