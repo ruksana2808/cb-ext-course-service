@@ -1,5 +1,6 @@
 package com.igot.cb.authentication.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.transactional.util.Constants;
@@ -36,7 +37,7 @@ public class AccessTokenValidator {
      * @param token The JWT token to be validated.
      * @return A map containing the token body if the token is valid and not expired, otherwise an empty map.
      */
-    private Map<String, Object> validateToken(String token) {
+    Map<String, Object> validateToken(String token) {
         try {
             // Split the token into its elements
             String[] tokenElements = token.split("\\.");
@@ -108,7 +109,7 @@ public class AccessTokenValidator {
      * @param iss The issuer extracted from the token.
      * @return true if the issuer matches the realm URL, false otherwise.
      */
-    private boolean checkIss(String iss) {
+    public boolean checkIss(String iss) {
         // Check if the realm URL is blank or if the issuer does not match the realm URL
         if (StringUtils.isBlank(REALM_URL) || !REALM_URL.equalsIgnoreCase(iss)) {
             logger.warn("Issuer does not match the expected realm URL. Issuer: {}, Expected: {}", iss, REALM_URL);
@@ -119,11 +120,11 @@ public class AccessTokenValidator {
     }
 
 
-    private boolean isExpired(Integer expiration) {
+    public boolean isExpired(Integer expiration) {
         return (Time.currentTime() > expiration);
     }
 
-    private byte[] decodeFromBase64(String data) {
+    public byte[] decodeFromBase64(String data) {
         return Base64Util.decode(data, 11);
     }
 
@@ -152,5 +153,22 @@ public class AccessTokenValidator {
             }
         }
         return clientAccessTokenId;
+    }
+
+    public Map<String, Object> processToken(String token, Map<String, Object> headerData, String payload, String signature, String body) throws JsonProcessingException, JsonProcessingException {
+        String keyId = headerData.get("kid").toString();
+        // Verify the token signature
+        boolean isValid = CryptoUtil.verifyRSASign(payload, decodeFromBase64(signature), keyManager.getPublicKey(keyId).getPublicKey(), Constants.SHA_256_WITH_RSA);
+        // If token signature is valid, parse token body and check expiration
+        if (isValid) {
+            Map<String, Object> tokenBody = mapper.readValue(new String(decodeFromBase64(body)), new TypeReference<Map<String, Object>>() {
+            });
+            if (isExpired((Integer) tokenBody.get("exp"))) {
+                logger.error("Token expired: {}", token);
+                return Collections.emptyMap();
+            }
+            return tokenBody;
+        }
+        return null;
     }
 }
