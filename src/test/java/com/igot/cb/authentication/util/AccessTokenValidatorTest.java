@@ -40,7 +40,7 @@ public class AccessTokenValidatorTest {
     /**
      * Tests the checkIss method with a blank issuer.
      * This test verifies that the method returns false when the issuer is blank,
-     * as explicitly handled in the method implementation.
+     * as explicitly handled in the method implementation..
      */
     @Test
     public void testCheckIssWithBlankIssuer() {
