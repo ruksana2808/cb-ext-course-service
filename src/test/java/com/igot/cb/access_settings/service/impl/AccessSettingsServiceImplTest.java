@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 
 class AccessSettingsServiceImplTest {
 
-  @InjectMocks
+
   private AccessSettingsServiceImpl service;
 
   @Mock
@@ -34,19 +34,21 @@ class AccessSettingsServiceImplTest {
   @Mock
   private CassandraOperation cassandraOperation;
 
-
   private AutoCloseable mocks;
 
   @BeforeEach
   void setUp() {
     mocks = MockitoAnnotations.openMocks(this);
+    service = new AccessSettingsServiceImpl(payloadValidation, cassandraOperation);
   }
 
-  @AfterEach
-  void tearDown() throws Exception {
-    mocks.close();
+  @Test
+  void testConstructor_InitializesFields() {
+    PayloadValidation mockValidation = mock(PayloadValidation.class);
+    CassandraOperation mockCassandra = mock(CassandraOperation.class);
+    AccessSettingsServiceImpl impl = new AccessSettingsServiceImpl(mockValidation, mockCassandra);
+    assertNotNull(impl);
   }
-
 
   @Test
   void testUpsert_NullUserGroupDetails() {

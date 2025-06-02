@@ -27,18 +27,18 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
 
   private final PayloadValidation payloadValidation;
 
-  @Autowired
-  public AccessSettingsServiceImpl(PayloadValidation payloadValidation) {
-    this.payloadValidation = payloadValidation;
-  }
+  private final CassandraOperation cassandraOperation;
 
   @Autowired
-  CassandraOperation cassandraOperation;
+  public AccessSettingsServiceImpl(PayloadValidation payloadValidation, CassandraOperation cassandraOperation) {
+    this.payloadValidation = payloadValidation;
+    this.cassandraOperation = cassandraOperation;
+  }
 
   ObjectMapper objectMapper = new ObjectMapper();
 
   @Override
-    public ApiResponse upsert(Map<String, Object> userGroupDetails, String authToken) {
+  public ApiResponse upsert(Map<String, Object> userGroupDetails, String authToken) {
     logger.info("AccessSettingsService::create:inside");
     ApiResponse response = ProjectUtil.createDefaultResponse(Constants.ACCESS_SETTINGS_CREATE_API);
     if (userGroupDetails == null || userGroupDetails.isEmpty()) {
@@ -59,9 +59,10 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
       accessRuleData.put(Constants.CONTEXT_DATA, accessRuleDataJson);
       accessRuleData.put(Constants.IS_ARCHIVED, false);
       cassandraOperation.insertRecord(Constants.KEYSPACE_SUNBIRD_COURSE,
-          Constants.ACCESS_SETTINGS_RULES_TABLE, accessRuleData);
+              Constants.ACCESS_SETTINGS_RULES_TABLE, accessRuleData);
       response.getResult().put(Constants.MSG, Constants.CREATED_RULES);
       response.getResult().put(Constants.DATA, createPayloadWithUuid);
+      response.setResponseCode(HttpStatus.OK); // Set success response code
       return response;
     } catch (Exception e) {
       logger.error("Error while upserting access settings", e);
@@ -69,7 +70,6 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
       return response;
     }
   }
-
   private void setFailedResponse(ApiResponse response, String errorMessage) {
     response.getParams().setStatus(Constants.FAILED);
     response.setResponseCode(HttpStatus.BAD_REQUEST);
