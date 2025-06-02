@@ -1,20 +1,20 @@
 package com.igot.cb.accessSettings.contoller;
 
 
-
 import com.igot.cb.accessSettings.service.AccessSettingsService;
 import com.igot.cb.transactional.util.ApiResponse;
-import com.igot.cb.transactional.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 class AccessSettingsControllerTest {
