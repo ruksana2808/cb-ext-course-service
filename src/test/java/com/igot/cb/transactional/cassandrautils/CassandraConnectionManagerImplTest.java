@@ -21,6 +21,8 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import org.junit.jupiter.api.AfterEach;
 
 @ExtendWith(MockitoExtension.class)
 class CassandraConnectionManagerImplTest {
@@ -28,9 +30,18 @@ class CassandraConnectionManagerImplTest {
     @Mock
     PropertiesCache propertiesCache;
 
+    private AutoCloseable mocks;
+
     @BeforeEach
     void setup() {
-        MockitoAnnotations.openMocks(this);
+        mocks = MockitoAnnotations.openMocks(this);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (mocks != null) {
+            mocks.close();
+        }
     }
 
     @Test
@@ -58,9 +69,11 @@ class CassandraConnectionManagerImplTest {
     }
 
     @Test
-    void testShutdownHook() {
+    void testShutdownHook() throws InterruptedException {
         Thread thread = new CassandraConnectionManagerImpl.ResourceCleanUp();
         thread.start();
+        thread.join(2000); // Wait for the thread to finish (max 2 seconds)
+        assertFalse(thread.isAlive(), "Shutdown hook thread should have finished execution");
     }
 
     private ConsistencyLevel invokeGetConsistencyLevel() {

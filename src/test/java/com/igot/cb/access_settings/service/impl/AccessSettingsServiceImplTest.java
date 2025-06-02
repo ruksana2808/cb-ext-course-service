@@ -1,17 +1,18 @@
-package com.igot.cb.accessSettings.service.impl;
+package com.igot.cb.access_settings.service.impl;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igot.cb.accessSettings.util.Constants;
-import com.igot.cb.accessSettings.util.PayloadValidation;
+
+import com.igot.cb.access_settings.util.Constants;
+import com.igot.cb.access_settings.util.PayloadValidation;
 import com.igot.cb.transactional.cassandrautils.CassandraOperation;
 import com.igot.cb.transactional.util.ApiResponse;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
+
 import org.springframework.http.HttpStatus;
 
 import java.util.ArrayList;
@@ -33,13 +34,19 @@ class AccessSettingsServiceImplTest {
   @Mock
   private CassandraOperation cassandraOperation;
 
-  @Spy
-  private ObjectMapper objectMapper = new ObjectMapper();
+
+  private AutoCloseable mocks;
 
   @BeforeEach
   void setUp() {
-    MockitoAnnotations.openMocks(this);
+    mocks = MockitoAnnotations.openMocks(this);
   }
+
+  @AfterEach
+  void tearDown() throws Exception {
+    mocks.close();
+  }
+
 
   @Test
   void testUpsert_NullUserGroupDetails() {
@@ -70,7 +77,7 @@ class AccessSettingsServiceImplTest {
   }
 
   @Test
-  void testUpsert_Success() throws Exception {
+  void testUpsert_Success() {
     Map<String, Object> details = new HashMap<>();
     details.put(Constants.CONTENT_ID, "cid");
     details.put(Constants.ACCESS_CONTROL, new HashMap<>());
@@ -85,7 +92,7 @@ class AccessSettingsServiceImplTest {
   }
 
   @Test
-  void testUpsert_Exception() throws Exception {
+  void testUpsert_Exception() {
     Map<String, Object> details = new HashMap<>();
     details.put(Constants.CONTENT_ID, "cid");
     details.put(Constants.ACCESS_CONTROL, new HashMap<>());
@@ -98,6 +105,7 @@ class AccessSettingsServiceImplTest {
     assertTrue(response.getParams().getErrMsg().contains("Failed to create access settings"));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   void testCreateUserGroupIds_AddsUuid() {
     Map<String, Object> userGroup = new HashMap<>();
@@ -115,6 +123,7 @@ class AccessSettingsServiceImplTest {
     assertNotNull(resultGroups.get(0).get(Constants.USER_GROUP_ID));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   void testCreateUserGroupIds_WithExistingId() {
     Map<String, Object> userGroup = new HashMap<>();

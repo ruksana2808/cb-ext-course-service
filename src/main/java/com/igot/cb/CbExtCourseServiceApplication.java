@@ -1,6 +1,6 @@
 package com.igot.cb;
 
-import com.igot.cb.transactional.util.PropertiesCache;
+
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -38,15 +38,8 @@ public class CbExtCourseServiceApplication {
     private ClientHttpRequestFactory getClientHttpRequestFactory() {
 
       // Get the PropertiesCache instance to fetch the properties
-      PropertiesCache propertiesCache = PropertiesCache.getInstance();
-      int timeout = 45000;
 
-      // Fetch timeout and connection values from PropertiesCache
-      int connectTimeout = Integer.parseInt(propertiesCache.getProperty("rest.client.connect.timeout"));
-      int readTimeout = Integer.parseInt(propertiesCache.getProperty("rest.client.read.timeout"));
-      int connectionRequestTimeout = Integer.parseInt(propertiesCache.getProperty("rest.client.connection.request.timeout"));
-      int maxConnections = Integer.parseInt(propertiesCache.getProperty("rest.client.max.connections"));
-      int maxConnectionsPerRoute = Integer.parseInt(propertiesCache.getProperty("rest.client.max.connections.per.route"));
+        int timeout = 45000;
 
       // Configure the RequestConfig with timeouts
       RequestConfig config = RequestConfig.custom()

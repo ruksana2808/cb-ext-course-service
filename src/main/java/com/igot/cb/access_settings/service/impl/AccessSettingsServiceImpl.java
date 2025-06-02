@@ -1,10 +1,9 @@
-package com.igot.cb.accessSettings.service.impl;
+package com.igot.cb.access_settings.service.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igot.cb.accessSettings.service.AccessSettingsService;
-import com.igot.cb.accessSettings.util.Constants;
-import com.igot.cb.accessSettings.util.PayloadValidation;
+import com.igot.cb.access_settings.service.AccessSettingsService;
+import com.igot.cb.access_settings.util.Constants;
+import com.igot.cb.access_settings.util.PayloadValidation;
 import com.igot.cb.transactional.cassandrautils.CassandraOperation;
 import com.igot.cb.transactional.util.ApiResponse;
 import com.igot.cb.transactional.util.ProjectUtil;
@@ -24,10 +23,14 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class AccessSettingsServiceImpl implements AccessSettingsService {
 
-  private Logger logger = LoggerFactory.getLogger(AccessSettingsServiceImpl.class);
+  private final Logger logger = LoggerFactory.getLogger(AccessSettingsServiceImpl.class);
+
+  private final PayloadValidation payloadValidation;
 
   @Autowired
-  private PayloadValidation payloadValidation;
+  public AccessSettingsServiceImpl(PayloadValidation payloadValidation) {
+    this.payloadValidation = payloadValidation;
+  }
 
   @Autowired
   CassandraOperation cassandraOperation;
@@ -61,7 +64,7 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
       response.getResult().put(Constants.DATA, createPayloadWithUuid);
       return response;
     } catch (Exception e) {
-      logger.error("Error while upserting access settings: {}",e);
+      logger.error("Error while upserting access settings", e);
       setFailedResponse(response, "Failed to create access settings: " + e.getMessage());
       return response;
     }
@@ -73,6 +76,7 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
     response.getParams().setErrMsg(errorMessage);
   }
 
+  @SuppressWarnings("unchecked")
   public Map<String, Object> createUserGroupIds(Map<String, Object> payload) {
     Object accessControlObj = payload.get(Constants.ACCESS_CONTROL);
     if (accessControlObj instanceof Map) {

@@ -1,8 +1,9 @@
-package com.igot.cb.accessSettings.contoller;
+package com.igot.cb.access_settings.contoller;
 
 
-import com.igot.cb.accessSettings.service.AccessSettingsService;
+import com.igot.cb.access_settings.service.AccessSettingsService;
 import com.igot.cb.transactional.util.ApiResponse;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -10,6 +11,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,9 +28,18 @@ class AccessSettingsControllerTest {
   @Mock
   private AccessSettingsService accessSettingsService;
 
+  private AutoCloseable closeable;
+
   @BeforeEach
   void setUp() {
-    MockitoAnnotations.openMocks(this);
+    closeable = MockitoAnnotations.openMocks(this);
+  }
+
+  @AfterEach
+  void tearDown() throws Exception {
+    if (closeable != null) {
+      closeable.close();
+    }
   }
 
   @Test
