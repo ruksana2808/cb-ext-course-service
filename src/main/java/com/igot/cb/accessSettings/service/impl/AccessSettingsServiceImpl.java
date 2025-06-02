@@ -23,10 +23,14 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class AccessSettingsServiceImpl implements AccessSettingsService {
 
-  private Logger logger = LoggerFactory.getLogger(AccessSettingsServiceImpl.class);
+  private final Logger logger = LoggerFactory.getLogger(AccessSettingsServiceImpl.class);
+
+  private final PayloadValidation payloadValidation;
 
   @Autowired
-  private PayloadValidation payloadValidation;
+  public AccessSettingsServiceImpl(PayloadValidation payloadValidation) {
+    this.payloadValidation = payloadValidation;
+  }
 
   @Autowired
   CassandraOperation cassandraOperation;
@@ -60,7 +64,7 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
       response.getResult().put(Constants.DATA, createPayloadWithUuid);
       return response;
     } catch (Exception e) {
-      logger.error("Error while upserting access settings: {}",e);
+      logger.error("Error while upserting access settings", e);
       setFailedResponse(response, "Failed to create access settings: " + e.getMessage());
       return response;
     }
