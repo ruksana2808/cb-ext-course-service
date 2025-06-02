@@ -62,7 +62,6 @@ public class Base64Util {
      * should not close the output stream it is wrapping when it
      * itself is closed.
      */
-    public static final int NO_CLOSE = 16;
 
     //  --------------------------------------------------------
     //  shared code
@@ -155,14 +154,6 @@ public class Base64Util {
      *              Passing {@code DEFAULT} results in output that
      *              adheres to RFC 2045.
      */
-    public static String encodeToString(byte[] input, int flags) {
-        try {
-            return new String(encode(input, flags), "US-ASCII");
-        } catch (UnsupportedEncodingException e) {
-            // US-ASCII is guaranteed to be available.
-            throw new AssertionError(e);
-        }
-    }
 
     //  --------------------------------------------------------
     //  encoding
@@ -180,14 +171,6 @@ public class Base64Util {
      *               Passing {@code DEFAULT} results in output that
      *               adheres to RFC 2045.
      */
-    public static String encodeToString(byte[] input, int offset, int len, int flags) {
-        try {
-            return new String(encode(input, offset, len, flags), "US-ASCII");
-        } catch (UnsupportedEncodingException e) {
-            // US-ASCII is guaranteed to be available.
-            throw new AssertionError(e);
-        }
-    }
 
     /**
      * Base64-encode the given data and return a newly allocated
@@ -631,7 +614,7 @@ public class Base64Util {
                                 (input[p++] & 0xff);
                         tailLen = 0;
                     }
-                    ;
+
                     break;
 
                 case 2:
