@@ -2,8 +2,6 @@ package com.igot.cb.access_settings.util;
 
 public class Constants {
 
-  public static final String PAYLOAD_VALIDATION_FILE = "/payloadValidation/userRulesData.json";
-
   public static final String ACCESS_CONTROL = "accessControl";
   public static final String CONTENT_ID = "contentId";
   public static final String USER_GROUPS = "userGroups";
@@ -16,8 +14,6 @@ public class Constants {
   public static final String ACCESS_SETTINGS_RULES_TABLE = "access_setting_rules";
   public static final String CONTEXT_ID = "contextid";
   public static final String CONTEXT_DATA = "contextdata";
-  public static final String STATUS = "status";
-  public static final String SUCCESSFULLY_CREATED = "successfully created";
   public static final String MSG = "message";
   public static final Object CREATED_RULES = "Access settings created successfully";
   public static final String DATA = "data";
