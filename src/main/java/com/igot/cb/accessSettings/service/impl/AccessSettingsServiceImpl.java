@@ -1,6 +1,5 @@
 package com.igot.cb.accessSettings.service.impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.accessSettings.service.AccessSettingsService;
 import com.igot.cb.accessSettings.util.Constants;
