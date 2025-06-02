@@ -1,7 +1,7 @@
 package com.igot.cb.access_settings.service.impl;
 
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.igot.cb.access_settings.util.Constants;
 import com.igot.cb.access_settings.util.PayloadValidation;
 import com.igot.cb.transactional.cassandrautils.CassandraOperation;
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
+
 import org.springframework.http.HttpStatus;
 
 import java.util.ArrayList;
