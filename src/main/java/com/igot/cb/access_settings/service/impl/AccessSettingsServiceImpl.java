@@ -76,6 +76,7 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
     response.getParams().setErrMsg(errorMessage);
   }
 
+  @SuppressWarnings("unchecked")
   public Map<String, Object> createUserGroupIds(Map<String, Object> payload) {
     Object accessControlObj = payload.get(Constants.ACCESS_CONTROL);
     if (accessControlObj instanceof Map) {
