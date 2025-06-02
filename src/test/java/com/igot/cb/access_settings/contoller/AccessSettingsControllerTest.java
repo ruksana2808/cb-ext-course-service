@@ -25,9 +25,18 @@ class AccessSettingsControllerTest {
   @Mock
   private AccessSettingsService accessSettingsService;
 
+  private AutoCloseable closeable;
+
   @BeforeEach
   void setUp() {
-    MockitoAnnotations.openMocks(this);
+    closeable = MockitoAnnotations.openMocks(this);
+  }
+
+  @AfterEach
+  void tearDown() throws Exception {
+    if (closeable != null) {
+      closeable.close();
+    }
   }
 
   @Test
