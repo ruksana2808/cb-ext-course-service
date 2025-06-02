@@ -13,6 +13,7 @@ import org.springframework.util.ObjectUtils;
 public class PayloadValidation {
 
 
+  @SuppressWarnings("unchecked")
   public String validateAccessControlPayload(Map<String, Object> payload) {
     List<String> errList = new ArrayList<>();
 
