@@ -41,13 +41,6 @@ public class CbExtCourseServiceApplication {
       PropertiesCache propertiesCache = PropertiesCache.getInstance();
       int timeout = 45000;
 
-      // Fetch timeout and connection values from PropertiesCache
-      int connectTimeout = Integer.parseInt(propertiesCache.getProperty("rest.client.connect.timeout"));
-      int readTimeout = Integer.parseInt(propertiesCache.getProperty("rest.client.read.timeout"));
-      int connectionRequestTimeout = Integer.parseInt(propertiesCache.getProperty("rest.client.connection.request.timeout"));
-      int maxConnections = Integer.parseInt(propertiesCache.getProperty("rest.client.max.connections"));
-      int maxConnectionsPerRoute = Integer.parseInt(propertiesCache.getProperty("rest.client.max.connections.per.route"));
-
       // Configure the RequestConfig with timeouts
       RequestConfig config = RequestConfig.custom()
           .setResponseTimeout(Timeout.ofMilliseconds(timeout))

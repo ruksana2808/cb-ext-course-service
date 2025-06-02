@@ -58,9 +58,11 @@ class CassandraConnectionManagerImplTest {
     }
 
     @Test
-    void testShutdownHook() {
+    void testShutdownHook() throws InterruptedException {
         Thread thread = new CassandraConnectionManagerImpl.ResourceCleanUp();
         thread.start();
+        thread.join(2000); // Wait for the thread to finish (max 2 seconds)
+        assertFalse(thread.isAlive(), "Shutdown hook thread should have finished execution");
     }
 
     private ConsistencyLevel invokeGetConsistencyLevel() {
