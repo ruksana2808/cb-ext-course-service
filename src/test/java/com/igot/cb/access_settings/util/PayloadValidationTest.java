@@ -29,7 +29,7 @@ public class PayloadValidationTest {
     Map<String, Object> userGroup = new HashMap<>();
     List<Map<String, Object>> criteriaList = new ArrayList<>();
     Map<String, Object> criteria = new HashMap<>();
-    criteria.put(Constants.CRITERIA_VALUE, Arrays.asList("val1"));
+    criteria.put(Constants.CRITERIA_VALUE, Collections.singletonList("val1"));
     criteriaList.add(criteria);
     userGroup.put(Constants.USER_GROUP_CRTIRIA_LIST, criteriaList);
     userGroups.add(userGroup);
