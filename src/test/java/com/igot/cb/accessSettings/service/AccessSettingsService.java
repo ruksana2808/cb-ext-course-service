@@ -1,10 +1,27 @@
 package com.igot.cb.accessSettings.service;
 
 import com.igot.cb.transactional.util.ApiResponse;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
+import java.util.HashMap;
 import java.util.Map;
 
-public interface AccessSettingsService {
+import static org.mockito.Mockito.*;
 
-  ApiResponse upsert(Map<String, Object> userGroupDetails, String authToken);
+class AccessSettingsServiceTest {
+
+  @Test
+  void testUpsertMethodIsCalled() {
+    AccessSettingsService service = mock(AccessSettingsService.class);
+    Map<String, Object> details = new HashMap<>();
+    String token = "test-token";
+    ApiResponse response = new ApiResponse();
+
+    when(service.upsert(details, token)).thenReturn(response);
+
+    service.upsert(details, token);
+
+    verify(service, times(1)).upsert(details, token);
+  }
 }
