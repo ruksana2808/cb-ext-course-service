@@ -26,7 +26,7 @@ import java.io.UnsupportedEncodingException;
  */
 public class Base64Util {
     /**
-     * Default values for encoder/decoder flags.
+     * Default values for encoder/decoder flags..
      */
     public static final int DEFAULT = 0;
 
