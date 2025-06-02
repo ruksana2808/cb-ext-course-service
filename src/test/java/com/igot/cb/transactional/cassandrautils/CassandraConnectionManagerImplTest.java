@@ -29,6 +29,8 @@ class CassandraConnectionManagerImplTest {
     @Mock
     PropertiesCache propertiesCache;
 
+    private AutoCloseable mocks;
+
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);

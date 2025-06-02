@@ -1,6 +1,6 @@
 package com.igot.cb;
 
-import com.igot.cb.transactional.util.PropertiesCache;
+
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
