@@ -1,7 +1,7 @@
-package com.igot.cb.accessSettings.contoller;
+package com.igot.cb.access_settings.contoller;
 
 
-import com.igot.cb.accessSettings.service.AccessSettingsService;
+import com.igot.cb.access_settings.service.AccessSettingsService;
 import com.igot.cb.transactional.util.ApiResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

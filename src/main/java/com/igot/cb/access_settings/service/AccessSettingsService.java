@@ -1,6 +1,5 @@
-package com.igot.cb.accessSettings.service;
+package com.igot.cb.access_settings.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.igot.cb.transactional.util.ApiResponse;
 import java.util.Map;
 

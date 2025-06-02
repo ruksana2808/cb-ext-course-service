@@ -1,13 +1,11 @@
-package com.igot.cb.accessSettings.contoller;
+package com.igot.cb.access_settings.contoller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.igot.cb.accessSettings.service.AccessSettingsService;
+import com.igot.cb.access_settings.service.AccessSettingsService;
 import com.igot.cb.transactional.util.ApiResponse;
 import com.igot.cb.transactional.util.Constants;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;

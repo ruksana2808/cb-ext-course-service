@@ -1,8 +1,7 @@
-package com.igot.cb.accessSettings.service;
+package com.igot.cb.access_settings.service;
 
 import com.igot.cb.transactional.util.ApiResponse;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.HashMap;
 import java.util.Map;

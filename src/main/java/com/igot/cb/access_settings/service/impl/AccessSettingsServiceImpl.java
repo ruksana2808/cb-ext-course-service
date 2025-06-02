@@ -1,9 +1,9 @@
-package com.igot.cb.accessSettings.service.impl;
+package com.igot.cb.access_settings.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igot.cb.accessSettings.service.AccessSettingsService;
-import com.igot.cb.accessSettings.util.Constants;
-import com.igot.cb.accessSettings.util.PayloadValidation;
+import com.igot.cb.access_settings.service.AccessSettingsService;
+import com.igot.cb.access_settings.util.Constants;
+import com.igot.cb.access_settings.util.PayloadValidation;
 import com.igot.cb.transactional.cassandrautils.CassandraOperation;
 import com.igot.cb.transactional.util.ApiResponse;
 import com.igot.cb.transactional.util.ProjectUtil;

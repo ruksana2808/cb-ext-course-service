@@ -1,4 +1,4 @@
-package com.igot.cb.accessSettings.util;
+package com.igot.cb.access_settings.util;
 
 public class Constants {
 

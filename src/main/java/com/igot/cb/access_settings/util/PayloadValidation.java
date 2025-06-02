@@ -1,7 +1,6 @@
-package com.igot.cb.accessSettings.util;
+package com.igot.cb.access_settings.util;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
