@@ -26,7 +26,6 @@ import org.junit.jupiter.api.AfterEach;
 
 @ExtendWith(MockitoExtension.class)
 class CassandraConnectionManagerImplTest {
-    //
 
     @Mock
     PropertiesCache propertiesCache;
