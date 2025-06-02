@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/accessSetttings")
 public class AccessSettingsController {
 
+  @SuppressWarnings("unused")
   @Autowired
   private AccessSettingsService accessSettingsService;
 
