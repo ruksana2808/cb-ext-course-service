@@ -249,6 +249,7 @@ public class Constants {
     public static final String REDIS_CONNECTION_FACTORY = "redisConnectionFactory";
     public static final String REDIS_OBJECT_TEMPLATE = "redisObjectTemplate";
     public static final String REDIS_DATA_CONNECTION_FACTORY = "redisDataConnectionFactory";
+    public static final String DEFAULT_SUNBIRD_CASSANDRA_CONSISTENCY_LEVEL = "ONE";
 
     private Constants() {
     }

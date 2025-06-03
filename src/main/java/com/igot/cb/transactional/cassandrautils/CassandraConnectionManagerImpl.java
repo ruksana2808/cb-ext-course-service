@@ -13,7 +13,7 @@ import com.datastax.oss.driver.internal.core.time.AtomicTimestampGenerator;
 
 import com.igot.cb.transactional.util.Constants;
 import com.igot.cb.transactional.util.PropertiesCache;
-import com.igot.cb.transactional.util.exceptions.CustomException;
+import com.igot.cb.exceptions.CustomException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +59,7 @@ public class CassandraConnectionManagerImpl implements CassandraConnectionManage
     public CqlSession getSession(String keyspaceName) {
         // Check if session for keyspace already exists
         CqlSession currentSession = cassandraSessionMap.get(keyspaceName);
-        if (currentSession != null&& !currentSession.isClosed()) {
+        if (currentSession != null && !currentSession.isClosed()) {
             return currentSession;
         } else {
             // Create new session scoped to keyspace using the USE command
@@ -72,7 +72,7 @@ public class CassandraConnectionManagerImpl implements CassandraConnectionManage
     /**
      * Creates a Cassandra connection based on properties
      */
-    private CqlSession createCassandraConnectionWithKeySpaces(String keySpaceName) {
+    public CqlSession createCassandraConnectionWithKeySpaces(String keySpaceName) {
         try {
             // Load the properties required for connection
             PropertiesCache cache = PropertiesCache.getInstance();
@@ -139,7 +139,7 @@ public class CassandraConnectionManagerImpl implements CassandraConnectionManage
         }
     }
 
-    private void createCassandraConnection() {
+    public void createCassandraConnection() {
         try {
             session = createCassandraConnectionWithKeySpaces(null);
         } catch (Exception e) {
@@ -156,20 +156,22 @@ public class CassandraConnectionManagerImpl implements CassandraConnectionManage
      *
      * @return -consistency level from properties
      */
-    private static ConsistencyLevel getConsistencyLevel() {
+    public static ConsistencyLevel getConsistencyLevel() {
         String consistency = PropertiesCache.getInstance().readProperty(Constants.SUNBIRD_CASSANDRA_CONSISTENCY_LEVEL);
         logger.info("CassandraConnectionManagerImpl:getConsistencyLevel: level = " + consistency);
-        if (StringUtils.isBlank(consistency)) return null;
-
+        if (StringUtils.isBlank(consistency))
+            consistency = Constants.DEFAULT_SUNBIRD_CASSANDRA_CONSISTENCY_LEVEL;
         try {
             return DefaultConsistencyLevel.valueOf(consistency.toUpperCase());
         } catch (IllegalArgumentException exception) {
-            logger.info("CassandraConnectionManagerImpl:getConsistencyLevel: Exception occurred with error message = "
-                    + exception.getMessage());
+            logger.error("CassandraConnectionManagerImpl:getConsistencyLevel: Exception occurred with error message: ",
+                    exception);
+            throw new CustomException(
+                    Constants.ERROR,
+                    exception.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return null;
     }
-
 
 
     /**

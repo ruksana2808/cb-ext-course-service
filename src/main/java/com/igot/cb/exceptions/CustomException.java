@@ -1,4 +1,4 @@
-package com.igot.cb.transactional.util.exceptions;
+package com.igot.cb.exceptions;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -12,6 +12,8 @@ public class CustomException extends RuntimeException {
     private String code;
     private String message;
     private HttpStatus httpStatusCode;
+    private String errorCode;
+    private int responseCode;
 
     public CustomException() {
     }
@@ -20,6 +22,20 @@ public class CustomException extends RuntimeException {
         this.code = code;
         this.message = message;
         this.httpStatusCode = httpStatusCode;
+    }
+
+
+    public CustomException(String code, String message, int responseCode) {
+        this.code = code;
+        this.message = message;
+        this.responseCode = responseCode;
+    }
+
+    public CustomException(String code, String message, HttpStatus httpStatusCode, String errorCode) {
+        this.code = code;
+        this.message = message;
+        this.httpStatusCode = httpStatusCode;
+        this.errorCode = errorCode;
     }
 
 
