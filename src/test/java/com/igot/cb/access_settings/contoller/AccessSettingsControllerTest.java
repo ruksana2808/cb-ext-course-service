@@ -57,4 +57,20 @@ class AccessSettingsControllerTest {
     assertEquals(mockResponse, responseEntity.getBody());
     verify(accessSettingsService, times(1)).upsert(userGroupDetails, authToken);
   }
+
+  @Test
+  void testRead_ReturnsApiResponse() {
+    String doId = "do_12345";
+    ApiResponse mockResponse = new ApiResponse();
+    mockResponse.setResponseCode(HttpStatus.OK);
+
+    when(accessSettingsService.read(doId)).thenReturn(mockResponse);
+
+    ResponseEntity<ApiResponse> responseEntity = controller.read(doId);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertEquals(mockResponse, responseEntity.getBody());
+    verify(accessSettingsService, times(1)).read(doId);
+  }
+
 }
