@@ -6,6 +6,7 @@ import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Component;
 
 /**
  * @author Mahesh RV
@@ -16,6 +17,7 @@ import org.apache.logging.log4j.Logger;
  * Also handles environment variable overrides for properties.
  */
 
+@Component
 public class PropertiesCache {
     // Logger for logging messages
     private final Logger logger = LogManager.getLogger(getClass());

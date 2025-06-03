@@ -26,14 +26,13 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
   private final Logger logger = LoggerFactory.getLogger(AccessSettingsServiceImpl.class);
 
   private final PayloadValidation payloadValidation;
+  private final CassandraOperation cassandraOperation;
 
   @Autowired
-  public AccessSettingsServiceImpl(PayloadValidation payloadValidation) {
+  public AccessSettingsServiceImpl(CassandraOperation cassandraOperation, PayloadValidation payloadValidation) {
+    this.cassandraOperation = cassandraOperation;
     this.payloadValidation = payloadValidation;
   }
-
-  @Autowired
-  CassandraOperation cassandraOperation;
 
   ObjectMapper objectMapper = new ObjectMapper();
 

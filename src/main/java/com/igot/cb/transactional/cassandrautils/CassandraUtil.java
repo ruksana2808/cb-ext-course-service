@@ -16,7 +16,7 @@ public final class CassandraUtil {
     private CassandraUtil() {
     }
 
-    private static final CassandraPropertyReader propertiesCache = CassandraPropertyReader.getInstance();
+    static final CassandraPropertyReader propertiesCache = CassandraPropertyReader.getInstance();
 
 
     public static String getPreparedStatement(
@@ -40,7 +40,7 @@ public final class CassandraUtil {
     public static List<Map<String, Object>> createResponse(ResultSet results) {
         List<Map<String, Object>> responseList = new ArrayList<>();
         Map<String, String> columnsMapping = fetchColumnsMapping(results);
-        for (com.datastax.oss.driver.api.core.cql.Row row : results) {
+        for (Row row : results) {
             Map<String, Object> rowMap = new HashMap<>();
             columnsMapping.forEach((key, value) -> rowMap.put(key, row.getObject(value)));
             responseList.add(rowMap);

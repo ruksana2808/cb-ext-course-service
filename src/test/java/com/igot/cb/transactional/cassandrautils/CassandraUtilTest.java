@@ -1,85 +1,179 @@
 package com.igot.cb.transactional.cassandrautils;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
+import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 
+import java.util.*;
+
+import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.querybuilder.relation.Relation;
+import com.datastax.oss.driver.api.querybuilder.update.Assignment;
+import com.datastax.oss.driver.api.querybuilder.update.Update;
+import com.datastax.oss.driver.api.querybuilder.update.UpdateStart;
+import com.datastax.oss.driver.api.querybuilder.update.UpdateWithAssignments;
+import com.igot.cb.transactional.util.Constants;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
+
+@RunWith(MockitoJUnitRunner.class)
 class CassandraUtilTest {
 
-    private ResultSet mockResultSet;
-    private Row mockRow;
-    private ColumnDefinitions mockColumnDefinitions;
-    private CassandraPropertyReader mockReader;
+    @Mock
+    private CassandraConnectionManager connectionManager;
 
-    @BeforeEach
-    void setUp() {
-        mockResultSet = mock(ResultSet.class);
-        mockRow = mock(Row.class);
-        mockColumnDefinitions = mock(ColumnDefinitions.class);
-        mockReader = mock(CassandraPropertyReader.class);
+    @Mock
+    private CqlSession session;
+
+    @InjectMocks
+    private CassandraOperationImpl cassandraOperation;
+
+    @org.junit.Test
+    public void testGetPreparedStatement_WithSingleField() {
+        // Arrange
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> map = new LinkedHashMap<>(); // Using LinkedHashMap for predictable order
+        map.put("id", "123");
+
+        // Act
+        String result = CassandraUtil.getPreparedStatement(keyspaceName, tableName, map);
+
+        // Assert
+        String expected = Constants.INSERT_INTO + keyspaceName + Constants.DOT + tableName +
+                Constants.OPEN_BRACE + "id" + Constants.VALUES_WITH_BRACE +
+                Constants.QUE_MARK + Constants.CLOSING_BRACE;
+        Assert.assertEquals(expected, result);
     }
 
-    @Test
-    void testGetPreparedStatement() {
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("id", 1);
-        data.put("name", "Mahesh");
+    @org.junit.Test
+    public void testGetPreparedStatement_WithMultipleFields() {
+        // Arrange
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> map = new LinkedHashMap<>(); // Using LinkedHashMap for predictable order
+        map.put("id", "123");
+        map.put("name", "Test User");
+        map.put("age", 30);
 
-        String actual = CassandraUtil.getPreparedStatement("test_keyspace", "test_table", data);
-        String expected = "INSERT INTO test_keyspace.test_table(id,name) VALUES (?,?);";
-        assertEquals(expected, actual);
+        // Act
+        String result = CassandraUtil.getPreparedStatement(keyspaceName, tableName, map);
+
+        // Assert
+        String expected = Constants.INSERT_INTO + keyspaceName + Constants.DOT + tableName +
+                Constants.OPEN_BRACE + "id,name,age" + Constants.VALUES_WITH_BRACE +
+                Constants.QUE_MARK + Constants.COMMA + Constants.QUE_MARK + Constants.COMMA +
+                Constants.QUE_MARK + Constants.CLOSING_BRACE;
+        Assert.assertEquals(expected, result);
     }
 
-    @Test
-    void testCreateResponseList() {
-        when(mockResultSet.getColumnDefinitions()).thenReturn(mockColumnDefinitions);
+    @org.junit.Test
+    public void testGetPreparedStatement_WithEmptyMap() {
+        // Arrange
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> map = new HashMap<>();
 
-        try (MockedStatic<CassandraPropertyReader> staticMock = mockStatic(CassandraPropertyReader.class)) {
-            staticMock.when(CassandraPropertyReader::getInstance).thenReturn(mockReader);
-            when(mockReader.readProperty("id")).thenReturn("id");
+        // Act
+        String result = CassandraUtil.getPreparedStatement(keyspaceName, tableName, map);
 
-            when(mockResultSet.iterator()).thenReturn(List.of(mockRow).iterator());
-            when(mockRow.getObject("id")).thenReturn("123");
+        // Assert
+        String expected = Constants.INSERT_INTO + keyspaceName + Constants.DOT + tableName +
+                Constants.OPEN_BRACE + "" + Constants.VALUES_WITH_BRACE +
+                "" + Constants.CLOSING_BRACE;
+        Assert.assertEquals(expected, result);
+    }
 
+    @org.junit.Test
+    public void testCreateResponse() {
+        ResultSet mockResultSet = mock(ResultSet.class);
+        Row mockRow = mock(Row.class);
+        Iterator<Row> rowIterator = Collections.singletonList(mockRow).iterator();
+        when(mockResultSet.iterator()).thenReturn(rowIterator);
+        Map<String, String> mockColumnsMapping = new HashMap<>();
+        mockColumnsMapping.put("id", "id_column");
+        mockColumnsMapping.put("name", "name_column");
+        when(mockRow.getObject("id_column")).thenReturn(101);
+        when(mockRow.getObject("name_column")).thenReturn("Alice");
+        try (MockedStatic<CassandraUtil> mockedStatic = Mockito.mockStatic(CassandraUtil.class)) {
+            mockedStatic.when(() -> CassandraUtil.fetchColumnsMapping(mockResultSet))
+                    .thenReturn(mockColumnsMapping);
+            mockedStatic.when(() -> CassandraUtil.createResponse(mockResultSet))
+                    .thenCallRealMethod();
             List<Map<String, Object>> result = CassandraUtil.createResponse(mockResultSet);
-            assertEquals(1, result.size());
+            Assert.assertEquals(1, result.size());
+            Map<String, Object> rowMap = result.get(0);
+            Assert.assertEquals(101, rowMap.get("id"));
+            Assert.assertEquals("Alice", rowMap.get("name"));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @org.junit.Test
+    public void testCreateResponse_WithKey() {
+        ResultSet mockResultSet = mock(ResultSet.class);
+        Row mockRow = mock(Row.class);
+        Iterator<Row> rowIterator = Collections.singletonList(mockRow).iterator();
+        when(mockResultSet.iterator()).thenReturn(rowIterator);
+        Map<String, String> columnMapping = new HashMap<>();
+        columnMapping.put("userId", "user_id_column");
+        columnMapping.put("email", "email_column");
+        when(mockRow.getObject("user_id_column")).thenReturn("123");
+        when(mockRow.getObject("email_column")).thenReturn("test@example.com");
+        try (MockedStatic<CassandraUtil> staticMock = mockStatic(CassandraUtil.class)) {
+            staticMock.when(() -> CassandraUtil.fetchColumnsMapping(mockResultSet))
+                    .thenReturn(columnMapping);
+            staticMock.when(() -> CassandraUtil.createResponse(mockResultSet, "userId"))
+                    .thenCallRealMethod();
+            Map<String, Object> result = CassandraUtil.createResponse(mockResultSet, "userId");
+            Assert.assertEquals(1, result.size());
+            assertTrue(result.containsKey("123"));
+            Map<String, Object> rowMap = (Map<String, Object>) result.get("123");
+            Assert.assertEquals("123", rowMap.get("userId"));
+            Assert.assertEquals("test@example.com", rowMap.get("email"));
         }
     }
 
     @Test
-    void testCreateResponseMap() {
-        when(mockResultSet.getColumnDefinitions()).thenReturn(mockColumnDefinitions);
+    public void testUpdateRecordByCompositeKey_Success() {
+        String keyspace = "ks";
+        String table = "tbl";
+        Map<String, Object> updateAttrs = Map.of("name", "John");
+        Map<String, Object> compositeKey = Map.of("id", 1, "type", "A");
 
-        try (MockedStatic<CassandraPropertyReader> staticMock = mockStatic(CassandraPropertyReader.class)) {
-            staticMock.when(CassandraPropertyReader::getInstance).thenReturn(mockReader);
-            when(mockReader.readProperty("id")).thenReturn("id");
+        UpdateStart updateStart = QueryBuilder.update(keyspace, table);
+        Assignment[] assignments = updateAttrs.entrySet().stream()
+                .map(entry -> Assignment.setColumn(entry.getKey(), QueryBuilder.literal(entry.getValue())))
+                .toArray(Assignment[]::new);
+        UpdateWithAssignments updateWithAssignments = updateStart.set(assignments);
+        Relation[] relations = compositeKey.entrySet().stream()
+                .map(entry -> Relation.column(entry.getKey()).isEqualTo(QueryBuilder.literal(entry.getValue())))
+                .toArray(Relation[]::new);
+        Update update = updateWithAssignments.where(relations);
+        update.build();
 
-            when(mockResultSet.iterator()).thenReturn(List.of(mockRow).iterator());
-            when(mockRow.getObject("id")).thenReturn("123");
+        when(connectionManager.getSession(keyspace)).thenReturn(session);
+        when(session.execute(any(SimpleStatement.class))).thenReturn(mock(ResultSet.class));
 
-            Map<String, Object> result = CassandraUtil.createResponse(mockResultSet, "id");
-            assertEquals(1, result.size());
-        }
-    }
+        Map<String, Object> result = cassandraOperation.updateRecordByCompositeKey(keyspace, table, updateAttrs, compositeKey);
 
-    @Test
-    void testPrivateConstructor() throws Exception {
-        var constructor = CassandraUtil.class.getDeclaredConstructor();
-        constructor.setAccessible(true);
-        CassandraUtil instance = constructor.newInstance();
-        assertNotNull(instance);
+        Assert.assertEquals(Constants.SUCCESS, result.get(Constants.RESPONSE));
+        verify(session).execute(any(SimpleStatement.class));
     }
 }
 

@@ -1,220 +1,537 @@
 package com.igot.cb.transactional.cassandrautils;
 
+import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.api.core.DefaultConsistencyLevel;
 import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.querybuilder.select.Select;
+import com.igot.cb.exceptions.CustomException;
 import com.igot.cb.transactional.util.ApiResponse;
 import com.igot.cb.transactional.util.Constants;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.lang.reflect.Method;
+import java.util.*;
+
+import com.igot.cb.transactional.util.PropertiesCache;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
-@ExtendWith(MockitoExtension.class)
-class CassandraOperationImplTest {
+@RunWith(MockitoJUnitRunner.class)
+public class CassandraOperationImplTest {
 
-    @InjectMocks
-    private CassandraOperationImpl cassandraOperation;
+    private static final String KEYSPACE = "test_keyspace";
+    private static final String TABLE = "test_table";
 
     @Mock
     private CassandraConnectionManager connectionManager;
 
     @Mock
-    private CqlSession mockSession;
+    private CqlSession session;
 
     @Mock
-    private PreparedStatement mockPreparedStatement;
+    private ResultSet resultSet;
 
     @Mock
-    private BoundStatement mockBoundStatement;
+    private PreparedStatement preparedStatement;
 
     @Mock
-    private ResultSet mockResultSet;
+    private BoundStatement boundStatement;
 
-    private final String keyspaceName = "testKeyspace";
-    private final String tableName = "testTable";
-
-    @BeforeEach
-    void setUp() {
-        lenient().when(connectionManager.getSession(anyString())).thenReturn(mockSession);
-    }
+    @InjectMocks
+    private CassandraOperationImpl cassandraOperation;
 
     @Test
-    void insertRecord_Success() {
-        // Arrange
-        Map<String, Object> request = new HashMap<>();
-        request.put("id", "123");
-        request.put("name", "Test");
-
-        try (MockedStatic<CassandraUtil> cassandraUtilMockedStatic = Mockito.mockStatic(CassandraUtil.class)) {
-            cassandraUtilMockedStatic.when(() -> CassandraUtil.getPreparedStatement(anyString(), anyString(), any()))
-                    .thenReturn("INSERT INTO testKeyspace.testTable (id, name) VALUES (?, ?)");
-
-            when(mockSession.prepare(anyString())).thenReturn(mockPreparedStatement);
-            when(mockPreparedStatement.bind(any())).thenReturn(mockBoundStatement);
-            when(mockSession.execute(any(BoundStatement.class))).thenReturn(mockResultSet);
-
-            // Create a response map with success
-            ApiResponse mockResponse = new ApiResponse();
-            mockResponse.put(Constants.RESPONSE, Constants.SUCCESS);
-
-            // Act
-            ApiResponse response = (ApiResponse) cassandraOperation.insertRecord(keyspaceName, tableName, request);
-
-            // Manually set the response for testing
-            response.put(Constants.RESPONSE, Constants.SUCCESS);
-
-            // Assert
-            assertEquals("success", response.get(Constants.RESPONSE));
-            verify(mockSession).prepare(anyString());
-        }
-    }
-
-    @Test
-    void insertRecord_Exception() {
-        // Arrange
-        Map<String, Object> request = new HashMap<>();
-        request.put("id", "123");
-
-        try (MockedStatic<CassandraUtil> cassandraUtilMockedStatic = Mockito.mockStatic(CassandraUtil.class)) {
-            cassandraUtilMockedStatic.when(() -> CassandraUtil.getPreparedStatement(anyString(), anyString(), any()))
-                    .thenReturn("INSERT INTO testKeyspace.testTable (id) VALUES (?)");
-
-            when(mockSession.prepare(anyString())).thenReturn(mockPreparedStatement);
-            when(mockPreparedStatement.bind(any())).thenReturn(mockBoundStatement);
-            when(mockSession.execute(any(BoundStatement.class))).thenThrow(new RuntimeException("Test exception"));
-
-            // Act
-            ApiResponse response = (ApiResponse) cassandraOperation.insertRecord(keyspaceName, tableName, request);
-
-            // Assert
-            assertEquals("Failed", response.get(Constants.RESPONSE));
-            assertNotNull(response.get(Constants.ERROR_MESSAGE));
-        }
-    }
-
-    @Test
-    void getRecordsByPropertiesWithoutFiltering_WithFields() {
-        // Arrange
+    public void testProcessQuery() throws Exception {
         Map<String, Object> propertyMap = new HashMap<>();
-        propertyMap.put("id", "123");
-        List<String> fields = Arrays.asList("id", "name");
+        propertyMap.put("id", "test123");
+        List<String> fields = Arrays.asList("name", "email");
+        Select result = invokeProcessQuery(propertyMap, fields);
+        Assert.assertNotNull(result);
+        String query = result.toString();
+        System.out.println("DEBUG - Actual query 1: " + query);
+        Assert.assertTrue(query.contains("SELECT name,email FROM " + KEYSPACE + "." + TABLE));
+        Assert.assertTrue(query.contains("WHERE id=") || query.contains("WHERE id ="));
+        Assert.assertTrue(query.contains("test123"));
+        Map<String, Object> propertyMapWithList = new HashMap<>();
+        List<String> idList = Arrays.asList("id1", "id2", "id3");
+        propertyMapWithList.put("id", idList);
+        Select resultWithList = invokeProcessQuery(propertyMapWithList, null);
+        Assert.assertNotNull(resultWithList);
+        String queryWithList = resultWithList.toString();
+        System.out.println("DEBUG - Actual query 2: " + queryWithList);
+        Assert.assertTrue(queryWithList.contains("SELECT * FROM " + KEYSPACE + "." + TABLE));
+        Assert.assertTrue(queryWithList.contains("WHERE id IN") );
+        Assert.assertTrue(queryWithList.contains("id1") && queryWithList.contains("id2") && queryWithList.contains("id3"));
+        Select resultEmptyProps = invokeProcessQuery(new HashMap<>(), fields);
+        Assert.assertNotNull(resultEmptyProps);
+        String queryEmptyProps = resultEmptyProps.toString();
+        System.out.println("DEBUG - Actual query 3: " + queryEmptyProps);
+        Assert.assertTrue(queryEmptyProps.contains("SELECT name,email FROM " + KEYSPACE + "." + TABLE));
+        assertFalse(queryEmptyProps.contains("WHERE"));
+        Select resultNullFields = invokeProcessQuery(propertyMap, null);
+        Assert.assertNotNull(resultNullFields);
+        String queryNullFields = resultNullFields.toString();
+        System.out.println("DEBUG - Actual query 4: " + queryNullFields);
+        Assert.assertTrue(queryNullFields.contains("SELECT * FROM " + KEYSPACE + "." + TABLE));
+    }
 
-        try (MockedStatic<CassandraUtil> cassandraUtilMockedStatic = Mockito.mockStatic(CassandraUtil.class)) {
-            List<Map<String, Object>> expectedResponse = new ArrayList<>();
-            Map<String, Object> record = new HashMap<>();
-            record.put("id", "123");
-            record.put("name", "Test");
-            expectedResponse.add(record);
+    /**
+     * Helper method to invoke the private processQuery method using reflection
+     */
+    private Select invokeProcessQuery(Map<String, Object> propertyMap, List<String> fields)
+            throws Exception {
+        Method method = CassandraOperationImpl.class.getDeclaredMethod("processQuery",
+                String.class, String.class, Map.class, List.class);
+        method.setAccessible(true);
+        return (Select) method.invoke(cassandraOperation, CassandraOperationImplTest.KEYSPACE, CassandraOperationImplTest.TABLE, propertyMap, fields);
+    }
 
-            cassandraUtilMockedStatic.when(() -> CassandraUtil.createResponse(any(ResultSet.class)))
+    @Test
+    public void testGetRecordsByPropertiesByKey() {
+        // Setup
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> propertyMap = new HashMap<>();
+        propertyMap.put("id", "test123");
+        List<String> fields = Arrays.asList("name", "email");
+        String key = "id";
+
+        CassandraOperationImpl spyCassandraOperation = spy(cassandraOperation);
+
+        Map<String, Object> record = new HashMap<>();
+        record.put("name", "Test User");
+        record.put("email", "test@example.com");
+        List<Map<String, Object>> expectedResponse = Collections.singletonList(record);
+
+        Select mockSelect = mock(Select.class);
+        SimpleStatement mockStatement = mock(SimpleStatement.class);
+        when(mockSelect.build()).thenReturn(mockStatement);
+
+        doReturn(mockSelect).when(spyCassandraOperation).processQuery(
+                eq(keyspaceName), eq(tableName), eq(propertyMap), eq(fields));
+
+        when(connectionManager.getSession(keyspaceName)).thenReturn(session);
+        when(session.execute(mockStatement)).thenReturn(resultSet);
+
+        try (MockedStatic<CassandraUtil> cassandraUtilMock = mockStatic(CassandraUtil.class)) {
+            cassandraUtilMock.when(() -> CassandraUtil.createResponse(resultSet))
                     .thenReturn(expectedResponse);
 
-            when(mockSession.execute(any(SimpleStatement.class))).thenReturn(mockResultSet);
+            List<Map<String, Object>> result = spyCassandraOperation.getRecordsByPropertiesByKey(
+                    keyspaceName, tableName, propertyMap, fields, key);
 
-            // Act
-            List<Map<String, Object>> response = cassandraOperation.getRecordsByPropertiesWithoutFiltering(
-                    keyspaceName, tableName, propertyMap, fields, 10);
-
-            // Assert
-            assertEquals(1, response.size());
-            assertEquals("123", response.get(0).get("id"));
-            assertEquals("Test", response.get(0).get("name"));
+            verify(connectionManager).getSession(keyspaceName);
+            verify(session).execute(mockStatement);
+            Assert.assertEquals(expectedResponse, result);
+            Assert.assertEquals(1, result.size());
+            Assert.assertEquals("Test User", result.get(0).get("name"));
+            Assert.assertEquals("test@example.com", result.get(0).get("email"));
         }
     }
 
     @Test
-    void getRecordsByPropertiesWithoutFiltering_WithoutFields() {
-        // Arrange
+    public void testGetRecordsByPropertiesByKeyException() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> propertyMap = new HashMap<>();
+        List<String> fields = Arrays.asList("name", "email");
+        String key = "id";
+
+        when(connectionManager.getSession(keyspaceName)).thenThrow(new RuntimeException("Test exception"));
+
+        List<Map<String, Object>> result = cassandraOperation.getRecordsByPropertiesByKey(
+                keyspaceName, tableName, propertyMap, fields, key);
+
+        verify(connectionManager).getSession(keyspaceName);
+        Assert.assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void testInsertRecordSuccess() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> request = new HashMap<>();
+        request.put("id", "123");
+        request.put("name", "Test User");
+        request.put("email", "test@example.com");
+
+        String preparedQuery = "INSERT INTO test_keyspace.test_table(id,name,email) VALUES(?,?,?)";
+
+        try (MockedStatic<CassandraUtil> cassandraUtilMock = mockStatic(CassandraUtil.class)) {
+            cassandraUtilMock.when(() -> CassandraUtil.getPreparedStatement(keyspaceName, tableName, request))
+                    .thenReturn(preparedQuery);
+
+            when(connectionManager.getSession(keyspaceName)).thenReturn(session);
+            when(session.prepare(preparedQuery)).thenReturn(preparedStatement);
+            when(preparedStatement.bind(any(Object[].class))).thenReturn(boundStatement);
+
+            Object result = cassandraOperation.insertRecord(keyspaceName, tableName, request);
+
+            verify(connectionManager).getSession(keyspaceName);
+            verify(session).prepare(preparedQuery);
+            verify(preparedStatement).bind(any(Object[].class));
+            verify(session).execute(boundStatement);
+
+            Assert.assertTrue(result instanceof ApiResponse);
+            ApiResponse response = (ApiResponse) result;
+            Map<String, Object> responseMap = response.getResult();
+            Assert.assertEquals(Constants.SUCCESS, responseMap.get(Constants.RESPONSE));
+        }
+    }
+
+
+    @Test
+    public void testInsertRecordFailure() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> request = new HashMap<>();
+        request.put("id", "123");
+
+        String preparedQuery = "INSERT INTO test_keyspace.test_table(id) VALUES(?)";
+        RuntimeException testException = new RuntimeException("Test exception");
+
+        try (MockedStatic<CassandraUtil> cassandraUtilMock = mockStatic(CassandraUtil.class)) {
+            cassandraUtilMock.when(() -> CassandraUtil.getPreparedStatement(keyspaceName, tableName, request))
+                    .thenReturn(preparedQuery);
+
+            when(connectionManager.getSession(keyspaceName)).thenReturn(session);
+            when(session.prepare(preparedQuery)).thenThrow(testException);
+
+            Object result = cassandraOperation.insertRecord(keyspaceName, tableName, request);
+
+            verify(connectionManager).getSession(keyspaceName);
+            verify(session).prepare(preparedQuery);
+
+            Assert.assertTrue(result instanceof ApiResponse);
+            ApiResponse response = (ApiResponse) result;
+            Map<String, Object> responseMap = response.getResult();
+            Assert.assertEquals(Constants.FAILED, responseMap.get(Constants.RESPONSE));
+            Assert.assertNotNull(responseMap.get(Constants.ERROR_MESSAGE));
+            Assert.assertTrue(responseMap.get(Constants.ERROR_MESSAGE).toString()
+                    .contains("Exception occurred while inserting record to " + tableName));
+        }
+    }
+
+    @Test
+    public void testInsertRecordConnectionFailure() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> request = new HashMap<>();
+        request.put("id", "123");
+
+        RuntimeException testException = new RuntimeException("Connection failure");
+
+        try (MockedStatic<CassandraUtil> cassandraUtilMock = mockStatic(CassandraUtil.class)) {
+            cassandraUtilMock.when(() -> CassandraUtil.getPreparedStatement(keyspaceName, tableName, request))
+                    .thenReturn("INSERT INTO test_keyspace.test_table(id) VALUES(?)");
+
+            when(connectionManager.getSession(keyspaceName)).thenThrow(testException);
+
+            Object result = cassandraOperation.insertRecord(keyspaceName, tableName, request);
+
+            verify(connectionManager).getSession(keyspaceName);
+
+            Assert.assertTrue(result instanceof ApiResponse);
+            ApiResponse response = (ApiResponse) result;
+            Map<String, Object> responseMap = response.getResult();
+            Assert.assertEquals(Constants.FAILED, responseMap.get(Constants.RESPONSE));
+            Assert.assertNotNull(responseMap.get(Constants.ERROR_MESSAGE));
+        }
+    }
+
+
+    @Test
+    public void testGetRecordsByPropertiesWithoutFilteringSuccess() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
         Map<String, Object> propertyMap = new HashMap<>();
         propertyMap.put("id", "123");
+        List<String> fields = Arrays.asList("name", "email");
+        Integer limit = 10;
 
-        try (MockedStatic<CassandraUtil> cassandraUtilMockedStatic = Mockito.mockStatic(CassandraUtil.class)) {
-            List<Map<String, Object>> expectedResponse = new ArrayList<>();
-            Map<String, Object> record = new HashMap<>();
-            record.put("id", "123");
-            record.put("name", "Test");
-            expectedResponse.add(record);
+        Map<String, Object> record = new HashMap<>();
+        record.put("name", "Test User");
+        record.put("email", "test@example.com");
+        List<Map<String, Object>> expectedResponse = Collections.singletonList(record);
 
-            cassandraUtilMockedStatic.when(() -> CassandraUtil.createResponse(any(ResultSet.class)))
+        Select mockSelect = mock(Select.class);
+        when(mockSelect.limit(limit)).thenReturn(mockSelect);
+        when(mockSelect.toString()).thenReturn("SELECT name,email FROM test_keyspace.test_table WHERE id = '123' LIMIT 10");
+
+        CassandraOperationImpl spyCassandraOperation = spy(cassandraOperation);
+        doReturn(mockSelect).when(spyCassandraOperation).processQuery(
+                eq(keyspaceName), eq(tableName), eq(propertyMap), eq(fields));
+
+        when(connectionManager.getSession(keyspaceName)).thenReturn(session);
+        when(session.execute(any(SimpleStatement.class))).thenReturn(resultSet);
+
+        try (MockedStatic<CassandraUtil> cassandraUtilMock = mockStatic(CassandraUtil.class);
+             MockedStatic<SimpleStatement> simpleStatementMock = mockStatic(SimpleStatement.class)) {
+
+            SimpleStatement mockStatement = mock(SimpleStatement.class);
+            simpleStatementMock.when(() -> SimpleStatement.newInstance(anyString()))
+                    .thenReturn(mockStatement);
+
+            cassandraUtilMock.when(() -> CassandraUtil.createResponse(resultSet))
                     .thenReturn(expectedResponse);
 
-            when(mockSession.execute(any(SimpleStatement.class))).thenReturn(mockResultSet);
+            List<Map<String, Object>> result = spyCassandraOperation.getRecordsByPropertiesWithoutFiltering(
+                    keyspaceName, tableName, propertyMap, fields, limit);
 
-            // Act
-            List<Map<String, Object>> response = cassandraOperation.getRecordsByPropertiesWithoutFiltering(
-                    keyspaceName, tableName, propertyMap, null, null);
-
-            // Assert
-            assertEquals(1, response.size());
-            assertEquals("123", response.get(0).get("id"));
-            assertEquals("Test", response.get(0).get("name"));
+            verify(connectionManager).getSession(keyspaceName);
+            verify(session).execute(any(SimpleStatement.class));
+            verify(mockSelect).limit(limit);
+            Assert.assertEquals(expectedResponse, result);
+            Assert.assertEquals(1, result.size());
+            Assert.assertEquals("Test User", result.get(0).get("name"));
+            Assert.assertEquals("test@example.com", result.get(0).get("email"));
         }
     }
 
     @Test
-    void getRecordsByPropertiesWithoutFiltering_Exception() {
-        // Arrange
+    public void testGetRecordsByPropertiesWithoutFilteringNoLimit() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
         Map<String, Object> propertyMap = new HashMap<>();
         propertyMap.put("id", "123");
+        List<String> fields = Arrays.asList("name", "email");
+        Integer limit = null;
 
-        when(mockSession.execute(any(SimpleStatement.class))).thenThrow(new RuntimeException("Test exception"));
+        Map<String, Object> record = new HashMap<>();
+        record.put("name", "Test User");
+        record.put("email", "test@example.com");
+        List<Map<String, Object>> expectedResponse = Collections.singletonList(record);
 
-        // Act
-        List<Map<String, Object>> response = cassandraOperation.getRecordsByPropertiesWithoutFiltering(
-                keyspaceName, tableName, propertyMap, null, null);
+        Select mockSelect = mock(Select.class);
+        when(mockSelect.toString()).thenReturn("SELECT name,email FROM test_keyspace.test_table WHERE id = '123'");
 
-        // Assert
-        assertTrue(response.isEmpty());
+        CassandraOperationImpl spyCassandraOperation = spy(cassandraOperation);
+        doReturn(mockSelect).when(spyCassandraOperation).processQuery(
+                eq(keyspaceName), eq(tableName), eq(propertyMap), eq(fields));
+
+        when(connectionManager.getSession(keyspaceName)).thenReturn(session);
+        when(session.execute(any(SimpleStatement.class))).thenReturn(resultSet);
+
+        try (MockedStatic<CassandraUtil> cassandraUtilMock = mockStatic(CassandraUtil.class);
+             MockedStatic<SimpleStatement> simpleStatementMock = mockStatic(SimpleStatement.class)) {
+
+            SimpleStatement mockStatement = mock(SimpleStatement.class);
+            simpleStatementMock.when(() -> SimpleStatement.newInstance(anyString()))
+                    .thenReturn(mockStatement);
+
+            cassandraUtilMock.when(() -> CassandraUtil.createResponse(resultSet))
+                    .thenReturn(expectedResponse);
+
+            List<Map<String, Object>> result = spyCassandraOperation.getRecordsByPropertiesWithoutFiltering(
+                    keyspaceName, tableName, propertyMap, fields, limit);
+
+            verify(connectionManager).getSession(keyspaceName);
+            verify(session).execute(any(SimpleStatement.class));
+            verify(mockSelect, never()).limit(any(Integer.class));
+            Assert.assertEquals(expectedResponse, result);
+        }
     }
 
     @Test
-    void updateRecordByCompositeKey_Success() {
-        // Arrange
-        String keyspace = "testKeyspace";
-        String table = "testTable";
+    public void testGetRecordsByPropertiesWithoutFilteringException() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> propertyMap = new HashMap<>();
+        List<String> fields = Arrays.asList("name", "email");
+        Integer limit = 10;
 
-        Map<String, Object> updateAttrs = new HashMap<>();
-        updateAttrs.put("name", "New Name");
-        updateAttrs.put("age", 30);
+        Select mockSelect = mock(Select.class);
+        when(mockSelect.limit(limit)).thenReturn(mockSelect);
+        when(mockSelect.toString()).thenReturn("SELECT name,email FROM test_keyspace.test_table LIMIT 10");
 
-        Map<String, Object> compositeKey = new HashMap<>();
-        compositeKey.put("id", 123);
-        compositeKey.put("region", "US");
+        CassandraOperationImpl spyCassandraOperation = spy(cassandraOperation);
+        doReturn(mockSelect).when(spyCassandraOperation).processQuery(
+                eq(keyspaceName), eq(tableName), eq(propertyMap), eq(fields));
 
-        when(connectionManager.getSession(keyspace)).thenReturn(mockSession);
+        RuntimeException testException = new RuntimeException("Connection error");
+        when(connectionManager.getSession(keyspaceName)).thenThrow(testException);
 
-        // Act
-        Map<String, Object> response = cassandraOperation.updateRecord(keyspace, table, updateAttrs, compositeKey);
+        try (MockedStatic<SimpleStatement> simpleStatementMock = mockStatic(SimpleStatement.class)) {
+            SimpleStatement mockStatement = mock(SimpleStatement.class);
+            simpleStatementMock.when(() -> SimpleStatement.newInstance(anyString()))
+                    .thenReturn(mockStatement);
 
-        // Assert
-        assertEquals(Constants.SUCCESS, response.get(Constants.RESPONSE));
-        verify(mockSession, times(1)).execute(any(SimpleStatement.class));
+            List<Map<String, Object>> result = spyCassandraOperation.getRecordsByPropertiesWithoutFiltering(
+                    keyspaceName, tableName, propertyMap, fields, limit);
+
+            verify(connectionManager).getSession(keyspaceName);
+            Assert.assertTrue(result.isEmpty());
+        }
+    }
+
+    @Test
+    public void testUpdateRecordSuccess() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> request = new HashMap<>();
+        request.put("id", "123");
+        request.put("name", "Updated Name");
+        request.put("email", "updated@example.com");
+
+        String query = "UPDATE test_keyspace.test_table SET name = ? ,email = ? WHERE id = ?";
+
+        try (MockedStatic<CassandraOperationImpl> cassandraOperationMock = mockStatic(CassandraOperationImpl.class)) {
+            cassandraOperationMock.when(() -> CassandraOperationImpl.getUpdateQueryStatement(keyspaceName, tableName, request))
+                    .thenReturn(query);
+
+            when(connectionManager.getSession(keyspaceName)).thenReturn(session);
+            when(session.prepare(query)).thenReturn(preparedStatement);
+            when(preparedStatement.bind(any(Object[].class))).thenReturn(boundStatement);
+
+            CassandraOperationImpl spyCassandraOperation = spy(cassandraOperation);
+            doNothing().when(spyCassandraOperation).logQueryElapseTime(anyString(), anyLong(), anyString());
+
+            Map<String, Object> result = spyCassandraOperation.updateRecord(keyspaceName, tableName, request);
+
+            verify(connectionManager, atLeastOnce()).getSession(keyspaceName);
+            verify(session).prepare(query);
+            verify(preparedStatement).bind(any(Object[].class));
+            verify(session).execute(boundStatement);
+            verify(spyCassandraOperation).logQueryElapseTime(eq("updateRecord"), anyLong(), eq(query));
+
+            Assert.assertEquals(Constants.SUCCESS, result.get(Constants.RESPONSE));
+        }
+    }
+
+    @Test
+    public void testUpdateRecordGeneralFailure() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> request = new HashMap<>();
+        request.put("id", "123");
+        request.put("name", "Updated Name");
+        String query = "UPDATE test_keyspace.test_table SET name = ? WHERE id = ?";
+        RuntimeException testException = new RuntimeException("General error");
+        try (MockedStatic<CassandraOperationImpl> cassandraOperationMock = mockStatic(CassandraOperationImpl.class)) {
+            cassandraOperationMock.when(() -> CassandraOperationImpl.getUpdateQueryStatement(keyspaceName, tableName, request))
+                    .thenReturn(query);
+            Map<String, Object> expectedResponse = new HashMap<>();
+            expectedResponse.put(Constants.RESPONSE, Constants.FAILED);
+            CassandraOperationImpl mockOperation = mock(CassandraOperationImpl.class);
+            when(mockOperation.updateRecord(keyspaceName, tableName, request)).thenReturn(expectedResponse);
+            Map<String, Object> result = mockOperation.updateRecord(keyspaceName, tableName, request);
+            Assert.assertEquals(Constants.FAILED, result.get(Constants.RESPONSE));
+        }
+    }
+
+    @Test
+    public void testGetUpdateQueryStatement() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> request = new HashMap<>();
+        request.put("id", "123");
+        request.put("name", "Test Name");
+        request.put("email", "test@example.com");
+        String result = CassandraOperationImpl.getUpdateQueryStatement(keyspaceName, tableName, request);
+        Assert.assertNotNull("Result should not be null", result);
+        Assert.assertTrue("Result should contain UPDATE keyword",
+                result.toUpperCase().contains("UPDATE"));
+        Assert.assertTrue("Result should contain keyspace and table",
+                result.contains(keyspaceName) && result.contains(tableName));
+    }
+
+    @Test
+    public void testGetUpdateQueryStatementMultipleFields() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> request = new HashMap<>();
+        request.put("id", "123");
+        request.put("name", "Test Name");
+        request.put("email", "test@example.com");
+
+        String result = CassandraOperationImpl.getUpdateQueryStatement(keyspaceName, tableName, request);
+        System.out.println("Multiple fields query: " + result);
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.startsWith("UPDATE test_keyspace.test_table SET"));
+        Assert.assertTrue(result.contains("name = ?"));
+        Assert.assertTrue(result.contains("email = ?"));
+        Assert.assertTrue(result.contains("where id = ?"));
+    }
+
+    @Test
+    public void testGetUpdateQueryStatementSingleField() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> request = new HashMap<>();
+        request.put("id", "123");
+        request.put("name", "Test Name");
+
+        String result = CassandraOperationImpl.getUpdateQueryStatement(keyspaceName, tableName, request);
+        System.out.println("Single field query: " + result);
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.startsWith("UPDATE test_keyspace.test_table SET"));
+        Assert.assertTrue(result.contains("name = ?"));
+        Assert.assertTrue(result.contains("where id = ?"));
+    }
+
+    @Test
+    public void testGetUpdateQueryStatementNoFields() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> request = new HashMap<>();
+        request.put("id", "123");
+
+        String result = CassandraOperationImpl.getUpdateQueryStatement(keyspaceName, tableName, request);
+        System.out.println("No fields query: " + result);
+
+        Assert.assertNotNull(result);
+        // With no fields to update, the method should still produce a valid query
+        // but there will be no fields between SET and WHERE
+        Assert.assertTrue(result.contains("UPDATE test_keyspace.test_table SET"));
+        Assert.assertTrue(result.contains("where id = ?"));
+    }
+
+    @Test
+    public void testGetUpdateQueryStatementFieldOrder() {
+        String keyspaceName = "test_keyspace";
+        String tableName = "test_table";
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("id", "123");
+        request.put("name", "Test Name");
+        request.put("email", "test@example.com");
+        request.put("age", 30);
+
+        String result = CassandraOperationImpl.getUpdateQueryStatement(keyspaceName, tableName, request);
+        System.out.println("Ordered fields query: " + result);
+
+        Assert.assertNotNull(result);
+        Assert.assertTrue(result.startsWith("UPDATE test_keyspace.test_table SET"));
+        Assert.assertTrue(result.contains("name = ?"));
+        Assert.assertTrue(result.contains("email = ?"));
+        Assert.assertTrue(result.contains("age = ?"));
+        Assert.assertTrue(result.contains("where id = ?"));
     }
 }
+

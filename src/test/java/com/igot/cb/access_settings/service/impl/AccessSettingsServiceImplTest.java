@@ -25,21 +25,20 @@ import static org.mockito.Mockito.*;
 
 class AccessSettingsServiceImplTest {
 
-  @InjectMocks
-  private AccessSettingsServiceImpl service;
-
   @Mock
   private PayloadValidation payloadValidation;
 
   @Mock
   private CassandraOperation cassandraOperation;
 
+  private AccessSettingsServiceImpl service;
 
   private AutoCloseable mocks;
 
   @BeforeEach
   void setUp() {
     mocks = MockitoAnnotations.openMocks(this);
+    service = new AccessSettingsServiceImpl(cassandraOperation, payloadValidation);
   }
 
   @AfterEach
@@ -158,3 +157,4 @@ class AccessSettingsServiceImplTest {
     assertEquals(payload, result);
   }
 }
+

@@ -31,7 +31,7 @@ import static org.mockito.Mockito.doThrow;
 import org.springframework.http.HttpStatus;
 
 @RunWith(MockitoJUnitRunner.class)
-class CassandraConnectionManagerImplTest {
+public class CassandraConnectionManagerImplTest {
     @Mock private PropertiesCache propertiesCache;
     @Mock private CqlSession mockSession;
     @Mock private Metadata mockMetadata;
@@ -75,7 +75,7 @@ class CassandraConnectionManagerImplTest {
         }
     }
 
-    @org.junit.Test
+    @Test
     public void testGetSession_ExistingSession() {
         String keyspaceName = "testKeyspace";
         CqlSession firstResult = cassandraConnectionManager.getSession(keyspaceName);
@@ -84,14 +84,14 @@ class CassandraConnectionManagerImplTest {
         assertSame(firstResult, secondResult);
     }
 
-    @org.junit.Test
+    @Test
     public void testGetSession_NoExistingSession() {
         String keyspaceName = "testKeyspace";
         CqlSession result = cassandraConnectionManager.getSession(keyspaceName);
         assertSame(mockSession, result);
     }
 
-    @org.junit.Test
+    @Test
     public void testGetConsistencyLevel_ValidLevel() {
         try (MockedStatic<PropertiesCache> propertiesCacheMock = mockStatic(PropertiesCache.class)) {
             PropertiesCache mockCache = mock(PropertiesCache.class);
@@ -102,7 +102,7 @@ class CassandraConnectionManagerImplTest {
         }
     }
 
-    @org.junit.Test
+    @Test
     public void testRegisterShutdownHook() {
         try (MockedStatic<Runtime> runtimeMock = mockStatic(Runtime.class)) {
             runtimeMock.when(Runtime::getRuntime).thenReturn(mockRuntime);
@@ -111,7 +111,7 @@ class CassandraConnectionManagerImplTest {
         }
     }
 
-    @org.junit.Test
+    @Test
     public void testResourceCleanUp_Run() {
         CassandraConnectionManagerImpl.ResourceCleanUp cleanUp = mock(CassandraConnectionManagerImpl.ResourceCleanUp.class);
         doNothing().when(cleanUp).run();
@@ -119,7 +119,7 @@ class CassandraConnectionManagerImplTest {
         verify(cleanUp).run();
     }
 
-    @org.junit.Test
+    @Test
     public void testCreateCassandraConnectionWithKeySpaces_MissingHostConfig() {
         try (MockedStatic<PropertiesCache> propertiesCacheMock = mockStatic(PropertiesCache.class)) {
             propertiesCacheMock.when(PropertiesCache::getInstance).thenReturn(propertiesCache);
