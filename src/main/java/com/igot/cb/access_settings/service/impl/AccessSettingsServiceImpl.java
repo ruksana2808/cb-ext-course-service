@@ -62,7 +62,14 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
       cassandraOperation.insertRecord(Constants.KEYSPACE_SUNBIRD_COURSE,
           Constants.ACCESS_SETTINGS_RULES_TABLE, accessRuleData);
       response.getResult().put(Constants.MSG, Constants.CREATED_RULES);
-      response.getResult().put(Constants.DATA, createPayloadWithUuid);
+      // Remove all other keys, and put a single object after message
+      Map<String, Object> payload = new HashMap<>();
+      payload.put(Constants.ACCESS_CONTROL, createPayloadWithUuid.get(Constants.ACCESS_CONTROL));
+      // Remove all keys except message, then put the payload as a single entry
+      Map<String, Object> result = response.getResult();
+      result.clear();
+      result.put(Constants.MSG, Constants.CREATED_RULES);
+      result.putAll(payload);
       return response;
     } catch (Exception e) {
       logger.error("Error while upserting access settings", e);
@@ -86,18 +93,17 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
               Constants.KEYSPACE_SUNBIRD_COURSE, Constants.ACCESS_SETTINGS_RULES_TABLE, propertyMap,
               fields, null);
       if (!accessSettingRule.isEmpty()) {
-        List<Map<String, Object>> resultList = new ArrayList<>();
-        for (Map<String, Object> record : accessSettingRule) {
-          Boolean status = (Boolean) record.get(Constants.IS_ARCHIVED);
-          if (Boolean.FALSE.equals(status)) {
-            String contextDataJson = (String) record.get(Constants.CONTEXT_DATA);
+        Map<String, Object> record = accessSettingRule.get(0);
+        Boolean status = (Boolean) record.get(Constants.IS_ARCHIVED);
+        if (Boolean.FALSE.equals(status)) {
+          Object contextDataObj = record.get(Constants.CONTEXT_DATA);
+          String contextDataJson = (contextDataObj instanceof String) ? (String) contextDataObj : null;
+          if (StringUtils.isNotEmpty(contextDataJson)) {
             try {
               Map<String, Object> contextDataMap = objectMapper.readValue(
                       contextDataJson, new TypeReference<Map<String, Object>>() {});
-              // Add contextid and isarchived to the map
-              contextDataMap.put(Constants.CONTEXT_ID, record.get(Constants.CONTEXT_ID));
-              contextDataMap.put(Constants.IS_ARCHIVED, status);
-              resultList.add(contextDataMap);
+              response.setResult(contextDataMap);
+              return response;
             } catch (Exception e) {
               logger.error("Failed to parse CONTEXT_DATA JSON", e);
               throw new CustomException(
@@ -106,9 +112,16 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
                       HttpStatus.INTERNAL_SERVER_ERROR
               );
             }
+          } else {
+            response.getParams().setStatus(Constants.FAILED);
+            response.setResponseCode(HttpStatus.NOT_FOUND);
+            response.getParams().setErrMsg("No access settings found for the given contentId");
+            return response;
           }
         }
-        response.getResult().put(Constants.DATA, resultList);
+        response.getParams().setStatus(Constants.FAILED);
+        response.setResponseCode(HttpStatus.NOT_FOUND);
+        response.getParams().setErrMsg("No access settings found for the given contentId");
         return response;
       }
       response.getParams().setStatus(Constants.FAILED);
@@ -117,7 +130,7 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
       return response;
 
     } catch (Exception e) {
-      logger.error("Error while joining community:", e);
+      logger.error("Error while reading accessRule:", e);
       throw new CustomException(
               Constants.ERROR,
               "error while processing",

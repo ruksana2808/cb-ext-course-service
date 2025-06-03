@@ -121,7 +121,8 @@ class AccessSettingsServiceImplTest {
     ApiResponse response = service.upsert(details, "token");
     assertEquals(HttpStatus.OK, response.getResponseCode());
     assertEquals(Constants.CREATED_RULES, response.getResult().get(Constants.MSG));
-    assertNotNull(response.getResult().get(Constants.DATA));
+    // assertEquals(doId, response.getResult().get("contentId")); // contentId is not present in response
+    assertEquals(accessControl, response.getResult().get("accessControl"));
   }
 
   @Test
@@ -192,7 +193,7 @@ class AccessSettingsServiceImplTest {
   }
 
   @Test
-  void testRead_HappyPath() throws Exception {
+  void testRead_HappyPath() {
     Map<String, Object> record = new HashMap<>();
     record.put(Constants.IS_ARCHIVED, false);
     record.put(Constants.CONTEXT_ID, "cid");
@@ -204,7 +205,7 @@ class AccessSettingsServiceImplTest {
 
     ApiResponse response = service.read("cid");
     assertEquals(HttpStatus.OK, response.getResponseCode());
-    assertTrue(((List<?>) response.getResult().get(Constants.DATA)).size() == 1);
+    assertEquals("bar", response.getResult().get("foo"));
   }
 
   @Test
@@ -223,13 +224,7 @@ class AccessSettingsServiceImplTest {
     )).thenReturn(dbRecords);
 
     ApiResponse response = service.read(contentId);
-    assertNotNull(response.getResult().get(Constants.DATA));
-    List<?> resultList = (List<?>) response.getResult().get(Constants.DATA);
-    assertEquals(1, resultList.size());
-    Map<?, ?> resultMap = (Map<?, ?>) resultList.get(0);
-    assertEquals(contentId, resultMap.get(Constants.CONTEXT_ID));
-    assertEquals(false, resultMap.get(Constants.IS_ARCHIVED));
-    assertEquals("bar", resultMap.get("foo"));
+    assertEquals("bar", response.getResult().get("foo"));
   }
 
   @Test
@@ -252,10 +247,7 @@ class AccessSettingsServiceImplTest {
     )).thenReturn(dbRecords);
 
     ApiResponse response = service.read(contentId);
-    List<?> resultList = (List<?>) response.getResult().get(Constants.DATA);
-    assertEquals(1, resultList.size());
-    Map<?, ?> resultMap = (Map<?, ?>) resultList.get(0);
-    assertEquals(false, resultMap.get(Constants.IS_ARCHIVED));
+    assertEquals("bar", response.getResult().get("foo"));
   }
 
   @Test
@@ -272,7 +264,7 @@ class AccessSettingsServiceImplTest {
   }
 
   @Test
-  void testRead_Failure_ContextDataJsonParseError() throws Exception {
+  void testRead_Failure_ContextDataJsonParseError() {
     String contentId = "cid-err";
     Map<String, Object> dbRecord = new HashMap<>();
     dbRecord.put(Constants.CONTEXT_ID, contentId);
@@ -285,6 +277,36 @@ class AccessSettingsServiceImplTest {
 
     Exception ex = assertThrows(com.igot.cb.transactional.util.exceptions.CustomException.class, () -> service.read(contentId));
     assertTrue(ex.getMessage().contains("error while processing"));
+  }
+
+  @Test
+  void testRead_Failure_ContextDataIsNullOrEmpty() {
+    String contentId = "cid-empty";
+    Map<String, Object> dbRecordNull = new HashMap<>();
+    dbRecordNull.put(Constants.CONTEXT_ID, contentId);
+    dbRecordNull.put(Constants.IS_ARCHIVED, false);
+    dbRecordNull.put(Constants.CONTEXT_DATA, null);
+
+    Map<String, Object> dbRecordEmpty = new HashMap<>();
+    dbRecordEmpty.put(Constants.CONTEXT_ID, contentId);
+    dbRecordEmpty.put(Constants.IS_ARCHIVED, false);
+    dbRecordEmpty.put(Constants.CONTEXT_DATA, "");
+
+    // Test with null CONTEXT_DATA
+    when(cassandraOperation.getRecordsByPropertiesWithoutFiltering(
+            anyString(), anyString(), anyMap(), anyList(), isNull()
+    )).thenReturn(Collections.singletonList(dbRecordNull));
+    ApiResponse responseNull = service.read(contentId);
+    assertEquals(HttpStatus.NOT_FOUND, responseNull.getResponseCode());
+    assertEquals(Constants.FAILED, responseNull.getParams().getStatus());
+
+    // Test with empty CONTEXT_DATA
+    when(cassandraOperation.getRecordsByPropertiesWithoutFiltering(
+            anyString(), anyString(), anyMap(), anyList(), isNull()
+    )).thenReturn(Collections.singletonList(dbRecordEmpty));
+    ApiResponse responseEmpty = service.read(contentId);
+    assertEquals(HttpStatus.NOT_FOUND, responseEmpty.getResponseCode());
+    assertEquals(Constants.FAILED, responseEmpty.getParams().getStatus());
   }
 
   @Test
