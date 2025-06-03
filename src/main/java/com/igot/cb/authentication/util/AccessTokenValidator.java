@@ -36,10 +36,6 @@ public class AccessTokenValidator {
      */
     public Map<String, Object> validateToken(String token) {
         try {
-            //  Null or empty check before processing
-            if (StringUtils.isBlank(token)) {
-                throw new IllegalArgumentException("Token is null or empty");
-            }
             // Split the token into its elements
             String[] tokenElements = token.split("\\.");
             // Check if the token has at least three elements
