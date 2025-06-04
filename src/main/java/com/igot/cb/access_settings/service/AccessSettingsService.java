@@ -8,4 +8,6 @@ public interface AccessSettingsService {
   ApiResponse upsert(Map<String, Object> userGroupDetails, String authToken);
 
   ApiResponse read(String contentId);
+
+  ApiResponse delete(String contentId);
 }

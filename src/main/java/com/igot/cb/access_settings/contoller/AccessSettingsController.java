@@ -33,4 +33,10 @@ public class AccessSettingsController {
     return new ResponseEntity<>(response, response.getResponseCode());
   }
 
+  @DeleteMapping("/v1/delete/{contentId}")
+  public ResponseEntity<ApiResponse> delete(@PathVariable("contentId") String contentId) {
+    ApiResponse response = accessSettingsService.delete(contentId);
+    return new ResponseEntity<>(response, response.getResponseCode());
+  }
+
 }
