@@ -160,7 +160,7 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
           return response;
     } catch (Exception e) {
       logger.error("Error while deleting accessRule:", e);
-      setFailedResponse(response, "Failed to delete access settings: " + e.getMessage());
+      setFailedResponse(response, "Failed to delete access settings: " + e);
       return response;
     }
   }
