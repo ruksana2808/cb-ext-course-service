@@ -319,4 +319,43 @@ class AccessSettingsServiceImplTest {
     Exception ex = assertThrows(com.igot.cb.transactional.util.exceptions.CustomException.class, () -> service.read(contentId));
     assertTrue(ex.getMessage().contains("error while processing"));
   }
+
+  @Test
+  void testDelete_NullOrEmptyContentId() {
+    ApiResponse responseNull = service.delete(null);
+    assertEquals(HttpStatus.BAD_REQUEST, responseNull.getResponseCode());
+    assertEquals("Content ID cannot be null or empty", responseNull.getParams().getErrMsg());
+
+    ApiResponse responseEmpty = service.delete("");
+    assertEquals(HttpStatus.BAD_REQUEST, responseEmpty.getResponseCode());
+    assertEquals("Content ID cannot be null or empty", responseEmpty.getParams().getErrMsg());
+  }
+
+  @Test
+  void testDelete_Success() {
+    String contentId = "cid-123";
+    Map<String, Object> expectedMap = new HashMap<>();
+    expectedMap.put(Constants.CONTEXT_ID, contentId);
+    expectedMap.put(Constants.CONTEXT_DATA, "");
+    expectedMap.put(Constants.IS_ARCHIVED, false);
+
+    when(cassandraOperation.insertRecord(anyString(), anyString(), anyMap())).thenReturn(null);
+
+    ApiResponse response = service.delete(contentId);
+
+    assertEquals(HttpStatus.OK, response.getResponseCode());
+    assertEquals("Access settings deleted successfully", response.getResult().get(Constants.MSG));
+
+  }
+
+  @Test
+  void testDelete_Exception() {
+    String contentId = "cid-123";
+    doThrow(new RuntimeException("db error")).when(cassandraOperation).insertRecord(anyString(), anyString(), anyMap());
+
+    ApiResponse response = service.delete(contentId);
+
+    assertEquals(HttpStatus.BAD_REQUEST, response.getResponseCode());
+    assertTrue(response.getParams().getErrMsg().contains("Failed to delete access settings"));
+  }
 }

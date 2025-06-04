@@ -139,6 +139,32 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
     }
   }
 
+  @Override
+  public ApiResponse delete(String contentId) {
+    logger.info("AccessSettingsService::delete:inside");
+    ApiResponse response = ProjectUtil.createDefaultResponse(Constants.API_ACCESS_RULE_READ);
+    if (StringUtils.isBlank(contentId)) {
+      logger.error("Content ID is null or empty");
+      setFailedResponse(response, "Content ID cannot be null or empty");
+      return response;
+    }
+    try {
+      Map<String, Object> accessRuleData = new HashMap<>();
+      accessRuleData.put(Constants.CONTEXT_ID, contentId);
+      accessRuleData.put(Constants.CONTEXT_DATA, "");
+      accessRuleData.put(Constants.IS_ARCHIVED, false);
+      cassandraOperation.insertRecord(Constants.KEYSPACE_SUNBIRD_COURSE,
+              Constants.ACCESS_SETTINGS_RULES_TABLE, accessRuleData);
+          response.setResponseCode(HttpStatus.OK);
+          response.getResult().put(Constants.MSG, "Access settings deleted successfully");
+          return response;
+    } catch (Exception e) {
+      logger.error("Error while deleting accessRule:", e);
+      setFailedResponse(response, "Failed to delete access settings: " + e.getMessage());
+      return response;
+    }
+  }
+
   private void setFailedResponse(ApiResponse response, String errorMessage) {
     response.getParams().setStatus(Constants.FAILED);
     response.setResponseCode(HttpStatus.BAD_REQUEST);
