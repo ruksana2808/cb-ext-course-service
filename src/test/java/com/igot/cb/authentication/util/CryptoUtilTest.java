@@ -8,7 +8,10 @@ import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.security.Signature;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class CryptoUtilTest {
 
     /**
