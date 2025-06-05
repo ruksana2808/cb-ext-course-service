@@ -9,7 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(MockitoExtension.class)
+
 public class Base64UtilTest {
 
     /**
@@ -19,16 +19,21 @@ public class Base64UtilTest {
     @Test
     public void testDecodeWithIncorrectPadding() {
         String inputWithIncorrectPadding = "SGVsbG8gV29ybGQ====="; // Extra padding
-        Base64Util.decode(inputWithIncorrectPadding, Base64Util.DEFAULT);
+        assertThrows(IllegalArgumentException.class, () -> {
+            Base64Util.decode(inputWithIncorrectPadding, Base64Util.DEFAULT);
+        });
     }
 
     /**
      * Tests that decode throws IllegalArgumentException when input contains incorrect padding.
      */
+
     @Test
     public void testDecodeWithIncorrectPadding_2() {
         byte[] input = "Invalid==Padding".getBytes();
-        Base64Util.decode(input, Base64Util.DEFAULT);
+        assertThrows(IllegalArgumentException.class, () -> {
+            Base64Util.decode(input, Base64Util.DEFAULT);
+        });
     }
 
     /**

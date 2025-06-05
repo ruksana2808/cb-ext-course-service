@@ -41,7 +41,7 @@ public class PayloadValidationTest {
     payload.put(Constants.ACCESS_CONTROL, accessControl);
 
     String result = payloadValidation.validateAccessControlPayload(payload);
-    assertNull(result);
+    assertTrue(result.isEmpty(), "Result should be empty for valid payload");
   }
 
   @Test
@@ -50,7 +50,7 @@ public class PayloadValidationTest {
     payload.put(Constants.ACCESS_CONTROL, new HashMap<>());
 
     String result = payloadValidation.validateAccessControlPayload(payload);
-    assertNull(result.contains("contentId"));
+    assertTrue(result.contains("contentId"), "Result should mention missing contentId");
   }
 
   @Test
