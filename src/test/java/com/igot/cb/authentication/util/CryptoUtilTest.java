@@ -18,7 +18,7 @@ public class CryptoUtilTest {
 
     /**
      * Test verifyRSASign method with an invalid algorithm.
-     * This test checks if the method returns false when an invalid algorithm is provided.
+     * This test checks if the method returns false when an invalid algorithm is provided
      */
     @Test
     public void test_verifyRSASign_invalidAlgorithm() {
