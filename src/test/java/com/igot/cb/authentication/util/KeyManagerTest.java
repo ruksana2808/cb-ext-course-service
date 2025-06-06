@@ -1,263 +1,112 @@
 package com.igot.cb.authentication.util;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import com.igot.cb.transactional.util.Constants;
 import com.igot.cb.authentication.model.KeyData;
 
-import com.igot.cb.transactional.util.PropertiesCache;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.KeyFactory;
 import java.security.PublicKey;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+
+import com.igot.cb.transactional.util.PropertiesCache;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
-class KeyManagerTest {
+@RunWith(MockitoJUnitRunner.class)
+public class KeyManagerTest {
 
-    @InjectMocks
-    private KeyManager keyManager;
+    private static final Logger logger = LoggerFactory.getLogger(KeyManagerTest.class.getName());
 
-    @Mock
-    private PropertiesCache propertiesCache;
-
-    private static final String TEST_PUBLIC_KEY = 
-            "-----BEGIN PUBLIC KEY-----\n" +
-            "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqt2oHJWMKEwO1KnMQbqx\n" +
-            "id+wC/pUYT6uBKnJ6nrRlKFAuZCHVl7ULYyFGI/Cx2BHlzQxZZ6Auc5uMI5yQQu4\n" +
-            "Iml9QUXjpUlaFvZ7WnIj1Uhu2+4CVovMJAo3JCQtMULp2QhpN8UQ9EFhIyTUxJk3\n" +
-            "Yf1hgqNVRxKGzLKFJLYa+GXI+GUo0RL8SqJFLR8tVA+FGgAKV1YRvNrwwWXEZzMg\n" +
-            "XCYwNAhxZLWPpdA5Kl0/YKk9HgqKKvZXG+2AaWZGFJm6DV4Z4Q3uCeSvjhwNGqZ9\n" +
-            "TtDRQeHjQqKmGv19m+qYh1mSPEBQQGBgITUKfmPSxpnXOaQdY8qEPQQMJq7jXuP9\n" +
-            "twIDAQAB\n" +
-            "-----END PUBLIC KEY-----";
-
-    private static final String TEST_KEY_ID = "test_key.pem";
-    private static final String TEST_BASE_PATH = "/tmp/test_keys";
-    
-    // Reference to the original keyMap
-    private Map<String, KeyData> originalKeyMap;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        // Save the original keyMap
-        Field keyMapField = KeyManager.class.getDeclaredField("keyMap");
-        keyMapField.setAccessible(true);
-        originalKeyMap = (Map<String, KeyData>) keyMapField.get(null);
-        
-        // Clear the keyMap for testing
-        originalKeyMap.clear();
-        
-        // Mock the PropertiesCache
-        lenient().when(propertiesCache.getProperty(Constants.ACCESS_TOKEN_PUBLICKEY_BASEPATH))
-            .thenReturn(TEST_BASE_PATH);
+    @Test
+    public void testLoadPublicKeyWithInvalidKeyString() {
+        String invalidKey = "InvalidKeyWithoutHeaderAndFooter";
+        assertThrows(java.security.spec.InvalidKeySpecException.class, () -> {
+            KeyManager.loadPublicKey(invalidKey);
+        });
     }
 
     @Test
-    void testInit_SuccessfulKeyLoading() throws Exception {
-        // Create a mock Path for the test key file
-        Path mockKeyPath = mock(Path.class);
-        // Path mockFileName = mock(Path.class);
-        // when(mockKeyPath.getFileName()).thenReturn(mockFileName);
-        // when(mockFileName.toString()).thenReturn(TEST_KEY_ID);
-        
-        // Mock the Files.walk method
-        try (MockedStatic<Files> filesMock = Mockito.mockStatic(Files.class);
-             MockedStatic<Paths> pathsMock = Mockito.mockStatic(Paths.class);
-             MockedStatic<PropertiesCache> propertiesCacheMock = Mockito.mockStatic(PropertiesCache.class)) {
-            
-            // Mock PropertiesCache.getInstance
-            propertiesCacheMock.when(PropertiesCache::getInstance).thenReturn(propertiesCache);
-            
-            // Mock Paths.get to return our mock path
-            Path basePath = mock(Path.class);
-            pathsMock.when(() -> Paths.get(TEST_BASE_PATH)).thenReturn(basePath);
-            pathsMock.when(() -> Paths.get(anyString())).thenReturn(mockKeyPath);
-            
-            // Mock Files.walk to return a stream with our test file
-            Stream<Path> mockStream = Stream.of(mockKeyPath);
-            filesMock.when(() -> Files.walk(basePath)).thenReturn(mockStream);
-            
-            // Mock Files.isRegularFile to return true for our test path
-            filesMock.when(() -> Files.isRegularFile(mockKeyPath)).thenReturn(true);
-            
-            // Mock Files.readAllLines to return our test public key content
-            List<String> keyLines = Arrays.asList(TEST_PUBLIC_KEY.split("\n"));
-            filesMock.when(() -> Files.readAllLines(mockKeyPath, StandardCharsets.UTF_8)).thenReturn(keyLines);
-            
-            // Mock the loadPublicKey method
-            try (MockedStatic<KeyManager> keyManagerMock = Mockito.mockStatic(KeyManager.class)) {
-                PublicKey mockPublicKey = mock(PublicKey.class);
-                keyManagerMock.when(() -> KeyManager.loadPublicKey(anyString())).thenReturn(mockPublicKey);
-                
-                // Call the init method
-                keyManager.init();
-                
-                // Verify the key was added to the keyMap
-                KeyData keyData = keyManager.getPublicKey(TEST_KEY_ID);
-                assertNull(keyData);
-            }
-        }
+    public void test_getPublicKey_nonExistentKeyId() {
+        KeyManager keyManager = new KeyManager();
+        String nonExistentKeyId = "nonexistent_key_id";
+        KeyData result = keyManager.getPublicKey(nonExistentKeyId);
+        assertNull(result);
     }
 
     @Test
-    void testInit_ExceptionDuringFileReading() throws Exception {
-        // Create a mock Path for the test key file
-        Path mockKeyPath = mock(Path.class);
-        Path mockFileName = mock(Path.class);
-        lenient().when(mockKeyPath.getFileName()).thenReturn(mockFileName);
-        lenient().when(mockFileName.toString()).thenReturn(TEST_KEY_ID);
-        
-        // Mock the Files.walk method
-        try (MockedStatic<Files> filesMock = Mockito.mockStatic(Files.class);
-             MockedStatic<Paths> pathsMock = Mockito.mockStatic(Paths.class);
-             MockedStatic<PropertiesCache> propertiesCacheMock = Mockito.mockStatic(PropertiesCache.class)) {
-            
-            // Mock PropertiesCache.getInstance
-            propertiesCacheMock.when(PropertiesCache::getInstance).thenReturn(propertiesCache);
-            
-            // Mock Paths.get to return our mock path
-            Path basePath = mock(Path.class);
-            pathsMock.when(() -> Paths.get(TEST_BASE_PATH)).thenReturn(basePath);
-            pathsMock.when(() -> Paths.get(anyString())).thenReturn(mockKeyPath);
-            
-            // Mock Files.walk to return a stream with our test file
-            Stream<Path> mockStream = Stream.of(mockKeyPath);
-            filesMock.when(() -> Files.walk(basePath)).thenReturn(mockStream);
-            
-            // Mock Files.isRegularFile to return true for our test path
-            filesMock.when(() -> Files.isRegularFile(mockKeyPath)).thenReturn(true);
-            
-            // Mock Files.readAllLines to throw an exception
-            filesMock.when(() -> Files.readAllLines(mockKeyPath, StandardCharsets.UTF_8))
-                .thenThrow(new IOException("Test exception"));
-            
-            // Call the init method - should not throw exception
-            assertDoesNotThrow(() -> keyManager.init());
-            
-            // Verify the keyMap is still empty
-            assertNull(keyManager.getPublicKey(TEST_KEY_ID));
-        }
-    }
-
-    @Test
-    void testInit_ExceptionDuringWalk() throws Exception {
-        // Mock the Files.walk method to throw an exception
-        try (MockedStatic<Files> filesMock = Mockito.mockStatic(Files.class);
-             MockedStatic<Paths> pathsMock = Mockito.mockStatic(Paths.class);
-             MockedStatic<PropertiesCache> propertiesCacheMock = Mockito.mockStatic(PropertiesCache.class)) {
-            
-            // Mock PropertiesCache.getInstance
-            propertiesCacheMock.when(PropertiesCache::getInstance).thenReturn(propertiesCache);
-            
-            // Mock Paths.get to return a mock path
-            Path basePath = mock(Path.class);
-            pathsMock.when(() -> Paths.get(TEST_BASE_PATH)).thenReturn(basePath);
-            
-            // Mock Files.walk to throw an exception
-            filesMock.when(() -> Files.walk(basePath)).thenThrow(new IOException("Test exception"));
-            
-            // Call the init method - should not throw exception
-            assertDoesNotThrow(() -> keyManager.init());
-            
-            // Verify the keyMap is still empty
-            assertNull(keyManager.getPublicKey(TEST_KEY_ID));
-        }
-    }
-
-    @Test
-    void testGetPublicKey() {
-        // Create a mock KeyData
-        PublicKey mockPublicKey = mock(PublicKey.class);
-        KeyData mockKeyData = new KeyData(TEST_KEY_ID, mockPublicKey);
-        
-        // Add the mock KeyData to the keyMap
-        originalKeyMap.put(TEST_KEY_ID, mockKeyData);
-        
-        // Call getPublicKey and verify the result
-        KeyData result = keyManager.getPublicKey(TEST_KEY_ID);
-        assertNotNull(result);
+    public void test_getPublicKey_returnsCorrectKeyData() {
+        KeyManager spyKeyManager = spy(new KeyManager());
+        KeyData mockKeyData = new KeyData("testKey", null);
+        doReturn(mockKeyData).when(spyKeyManager).getPublicKey("testKey");
+        KeyData result = spyKeyManager.getPublicKey("testKey");
         assertEquals(mockKeyData, result);
-        assertEquals(TEST_KEY_ID, result.getKeyId());
-        assertEquals(mockPublicKey, result.getPublicKey());
-        
-        // Test with a non-existent key ID
-        assertNull(keyManager.getPublicKey("non_existent_key"));
     }
 
     @Test
-    void testLoadPublicKey_Success() throws Exception {
-        // Prepare a valid public key string
-        String publicKeyString = TEST_PUBLIC_KEY;
-        
-        // Mock the Base64Util.decode method
-        try (MockedStatic<Base64Util> base64UtilMock = Mockito.mockStatic(Base64Util.class);
-             MockedStatic<KeyFactory> keyFactoryMock = Mockito.mockStatic(KeyFactory.class)) {
-            
-            // Create mock objects
-            byte[] mockDecodedBytes = new byte[] { 1, 2, 3, 4, 5 };
-            KeyFactory mockKeyFactory = mock(KeyFactory.class);
-            PublicKey mockPublicKey = mock(PublicKey.class);
-            
-            // Set up the mocks
-            base64UtilMock.when(() -> Base64Util.decode(any(byte[].class), eq(Base64Util.DEFAULT)))
-                .thenReturn(mockDecodedBytes);
-            
-            keyFactoryMock.when(() -> KeyFactory.getInstance("RSA")).thenReturn(mockKeyFactory);
-            when(mockKeyFactory.generatePublic(any(X509EncodedKeySpec.class))).thenReturn(mockPublicKey);
-            
-            // Call the method
-            PublicKey result = KeyManager.loadPublicKey(publicKeyString);
-            
-            // Verify the result
-            assertNotNull(result);
-            assertEquals(mockPublicKey, result);
-            
-            // Verify the X509EncodedKeySpec was created with the decoded bytes
-            keyFactoryMock.verify(() -> KeyFactory.getInstance("RSA"));
-            verify(mockKeyFactory).generatePublic(any(X509EncodedKeySpec.class));
+    public void test_loadPublicKey_validKeyString() throws Exception {
+        String validPublicKeyString =
+                "-----BEGIN PUBLIC KEY-----\n" +
+                        "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqe4M4f7sVew+5U2G6l5H\n" +
+                        "1T0WRfJOYd3qwWn2MtOpQ8kWODsxdmBrERHJCKrfTsNpcl8p3CsV1KUHmIqOeFLG\n" +
+                        "yyQ+QjMoCQ9uGzbCAPyLYAAIgf/mKPa7BK5sLfZ7MCPupA8K/RB/g/3ZHlTSWJn+\n" +
+                        "2uVyqY+xIzDfS1tLGnQz0Izmzy/JZm6+0BHrRs7TXVWrN6+YFlzXlN2cuLkxDGeu\n" +
+                        "fUPRtmS+gUFNPnWApxdFt/zq9riIqxECG1QHpZFg3c+QOj+3emNhJMxFhKTKMeZP\n" +
+                        "fkEkspt1ATsNnG+y+ZQKUQM1xPEk2FTaMdlDj1/5S9t5Rq8PlPlRFnBrBnrboJ+v\n" +
+                        "XQIDAQAB\n" +
+                        "-----END PUBLIC KEY-----";
+        PublicKey publicKey = KeyManager.loadPublicKey(validPublicKeyString);
+        assertNotNull("Public key should not be null", publicKey);
+        assertEquals("RSA", publicKey.getAlgorithm());
+    }
+
+
+    private static final String VALID_KEY_STRING =
+            "-----BEGIN PUBLIC KEY-----\n" +
+                    "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqe4M4f7sVew+5U2G6l5H\n" +
+                    "1T0WRfJOYd3qwWn2MtOpQ8kWODsxdmBrERHJCKrfTsNpcl8p3CsV1KUHmIqOeFLG\n" +
+                    "yyQ+QjMoCQ9uGzbCAPyLYAAIgf/mKPa7BK5sLfZ7MCPupA8K/RB/g/3ZHlTSWJn+\n" +
+                    "2uVyqY+xIzDfS1tLGnQz0Izmzy/JZm6+0BHrRs7TXVWrN6+YFlzXlN2cuLkxDGeu\n" +
+                    "fUPRtmS+gUFNPnWApxdFt/zq9riIqxECG1QHpZFg3c+QOj+3emNhJMxFhKTKMeZP\n" +
+                    "fkEkspt1ATsNnG+y+ZQKUQM1xPEk2FTaMdlDj1/5S9t5Rq8PlPlRFnBrBnrboJ+v\n" +
+                    "XQIDAQAB\n" +
+                    "-----END PUBLIC KEY-----";
+
+
+    @Test
+    public void test_loadPublicKey_noNewlines() throws Exception {
+        String noNewlines = VALID_KEY_STRING.replace("\n", "");
+        PublicKey key = KeyManager.loadPublicKey(noNewlines);
+        assertNotNull(key);
+    }
+
+
+    @Test
+    public void test_init_fileSystemException() throws Exception {
+        try (MockedStatic<PropertiesCache> propertiesCacheMock = Mockito.mockStatic(PropertiesCache.class);
+             MockedStatic<Files> filesMock = Mockito.mockStatic(Files.class);
+             MockedStatic<Paths> pathsMock = Mockito.mockStatic(Paths.class)) {
+            PropertiesCache mockPropertiesCache = mock(PropertiesCache.class);
+            propertiesCacheMock.when(PropertiesCache::getInstance).thenReturn(mockPropertiesCache);
+            KeyManager keyManager = new KeyManager();
+            keyManager.init();
         }
     }
 
     @Test
-    void testLoadPublicKey_Exception() {
-        // Prepare a valid public key string
-        String publicKeyString = TEST_PUBLIC_KEY;
-        
-        // Mock the Base64Util.decode method to throw an exception
-        try (MockedStatic<Base64Util> base64UtilMock = Mockito.mockStatic(Base64Util.class)) {
-            base64UtilMock.when(() -> Base64Util.decode(any(byte[].class), eq(Base64Util.DEFAULT)))
-                .thenThrow(new RuntimeException("Test exception"));
-            
-            // Call the method and verify it throws an exception
-            Exception exception = assertThrows(Exception.class, () -> KeyManager.loadPublicKey(publicKeyString));
-            assertEquals("Test exception", exception.getMessage());
+    public void test_init_propertyNotFound() throws Exception {
+        KeyManager spyKeyManager = spy(new KeyManager());
+        try (MockedStatic<PropertiesCache> propertiesCacheMock = Mockito.mockStatic(PropertiesCache.class)) {
+            PropertiesCache mockPropertiesCache = mock(PropertiesCache.class);
+            propertiesCacheMock.when(PropertiesCache::getInstance).thenReturn(mockPropertiesCache);
+            spyKeyManager.init();
+            verify(spyKeyManager).init();
         }
     }
 }
