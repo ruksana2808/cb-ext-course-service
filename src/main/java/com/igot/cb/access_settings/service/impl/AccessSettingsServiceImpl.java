@@ -30,6 +30,8 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
   private final PayloadValidation payloadValidation;
   private final CassandraOperation cassandraOperation;
 
+  private final CassandraOperation cassandraOperation;
+
   @Autowired
   public AccessSettingsServiceImpl(CassandraOperation cassandraOperation, PayloadValidation payloadValidation) {
     this.cassandraOperation = cassandraOperation;
@@ -39,7 +41,7 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
   ObjectMapper objectMapper = new ObjectMapper();
 
   @Override
-    public ApiResponse upsert(Map<String, Object> userGroupDetails, String authToken) {
+  public ApiResponse upsert(Map<String, Object> userGroupDetails, String authToken) {
     logger.info("AccessSettingsService::create:inside");
     ApiResponse response = ProjectUtil.createDefaultResponse(Constants.ACCESS_SETTINGS_CREATE_API);
     if (userGroupDetails == null || userGroupDetails.isEmpty()) {
@@ -60,16 +62,13 @@ public class AccessSettingsServiceImpl implements AccessSettingsService {
       accessRuleData.put(Constants.CONTEXT_DATA, accessRuleDataJson);
       accessRuleData.put(Constants.IS_ARCHIVED, false);
       cassandraOperation.insertRecord(Constants.KEYSPACE_SUNBIRD_COURSE,
-          Constants.ACCESS_SETTINGS_RULES_TABLE, accessRuleData);
+              Constants.ACCESS_SETTINGS_RULES_TABLE, accessRuleData);
       response.getResult().put(Constants.MSG, Constants.CREATED_RULES);
       // Remove all other keys, and put a single object after message
       Map<String, Object> payload = new HashMap<>();
       payload.put(Constants.ACCESS_CONTROL, createPayloadWithUuid.get(Constants.ACCESS_CONTROL));
       // Remove all keys except message, then put the payload as a single entry
-      Map<String, Object> result = response.getResult();
-      result.clear();
-      result.put(Constants.MSG, Constants.CREATED_RULES);
-      result.putAll(payload);
+      response.getResult().putAll(payload);
       return response;
     } catch (Exception e) {
       logger.error("Error while upserting access settings", e);
