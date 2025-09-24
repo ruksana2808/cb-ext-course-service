@@ -35,7 +35,7 @@ class AccessSettingRuleCacheMgrTest {
 
     @BeforeEach
     void setup() throws Exception {
-        cacheMgr = new AccessSettingRuleCacheMgr(redisCacheMgr, cassandraOperation, idMapCacheMgr);
+        cacheMgr = new AccessSettingRuleCacheMgr(redisCacheMgr, cassandraOperation);
         
         // Inject ObjectMapper using reflection
         Field mapperField = AccessSettingRuleCacheMgr.class.getDeclaredField("mapper");

@@ -65,12 +65,9 @@ public class IdMapCacheMgr {
             return result;
         } else {
             missingKeys.setLength(missingKeys.length() - 1);
-
             List<String> missingKeysList = Arrays.asList(missingKeys.toString().split(Constants.HASH));
             int batchSize = 50;
             List<List<String>> batches = createBatches(missingKeysList, batchSize);
-
-
             for (List<String> batch : batches) {
                 URI uri = UriComponentsBuilder
                         .fromHttpUrl(propertiesCache.getProperty(Constants.ID_MAP_SERVICE_URL)
@@ -85,7 +82,7 @@ public class IdMapCacheMgr {
 
                 if (CollectionUtils.isEmpty(response)) {
                     log.error("IdMapCacheMgr::getId: No response from ID Map service for keys: {}", batch);
-                    continue;
+                    break;
                 } else {
                     for (Map<String, Integer> responseObject : response) {
                         for (Map.Entry<String, Integer> entry : responseObject.entrySet()) {

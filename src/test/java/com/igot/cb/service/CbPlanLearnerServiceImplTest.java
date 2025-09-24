@@ -1,7 +1,7 @@
 package com.igot.cb.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.igot.cb.cache.CbPlanCacheMgr;
 import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.model.ApiResponse;
 import com.igot.cb.util.AccessTokenValidator;
@@ -34,13 +34,15 @@ class CbPlanLearnerServiceImplTest {
     @Mock(lenient = true)
     private ContentInfoServiceImpl contentService;
 
+    @Mock(lenient = true)
+    private CbPlanCacheMgr cbPlanCacheMgr;
 
 
     private CbPlanLearnerServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new CbPlanLearnerServiceImpl(accessTokenValidator, cassandraOperation);
+        service = new CbPlanLearnerServiceImpl(accessTokenValidator, cassandraOperation, cbPlanCacheMgr);
         ReflectionTestUtils.setField(service, "contentService", contentService);
     }
 
