@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -53,7 +54,7 @@ public class CbPlanCacheMgr {
                 allCbPlanList = new ArrayList<>();
             }
             allCbPlanList = allCbPlanList.stream()
-                    .filter(plan -> Boolean.TRUE.equals(plan.get(Constants.IS_ACTIVE))).toList();
+                    .filter(plan -> Boolean.TRUE.equals(plan.get(Constants.IS_ACTIVE))).collect(Collectors.toList());
             cbPlanCache.put("all", allCbPlanList);
         } else {
             log.info("Cache hit for all orgs: Found {} records", allCbPlanList.size());
@@ -78,7 +79,7 @@ public class CbPlanCacheMgr {
                 cbPlanList = new ArrayList<>();
             }
             cbPlanList = cbPlanList.stream()
-                    .filter(plan -> Boolean.TRUE.equals(plan.get(Constants.IS_ACTIVE))).toList();
+                    .filter(plan -> Boolean.TRUE.equals(plan.get(Constants.IS_ACTIVE))).collect(Collectors.toList());
             cbPlanCache.put(orgId + "-lookup", cbPlanList);
             cbPlanList.addAll(getCbPlanForAll());
         } else {
@@ -92,20 +93,22 @@ public class CbPlanCacheMgr {
         List<Map<String, Object>> activeCbPlans = cbPlanCache.getIfPresent(orgId);
         if (activeCbPlans != null) {
             log.info("Cache hit for orgId: {}, Found {} active CB Plans", orgId, activeCbPlans.size());
+            activeCbPlans = new ArrayList<>();
             return activeCbPlans;
         }
         List<Map<String, Object>> cbPlanList = getCbPlanForOrgId(orgId);
         if (cbPlanList.isEmpty()) {
             log.info("No CB Plans found for orgId: {}", orgId);
-            cbPlanCache.put(orgId, Collections.emptyList());
-            return Collections.emptyList();
+            cbPlanList = new ArrayList<>();
+            cbPlanCache.put(orgId, cbPlanList);
+            return cbPlanList;
         }
         cbPlanList = cbPlanList.stream()
                 .sorted(Comparator.comparing(m -> (Instant) m.get(Constants.END_DATE_REQUEST),
                         Comparator.reverseOrder()))
-                .toList();
+                .collect(Collectors.toList());
         List<String> planIds = cbPlanList.stream()
-                    .map(plan -> (String) plan.get(Constants.PLAN_ID)).toList();
+                    .map(plan -> (String) plan.get(Constants.PLAN_ID)).collect(Collectors.toList());
         Map<String, Object> propertiesMap = new HashMap<>();
         propertiesMap.put(Constants.PLAN_ID, planIds);
         List<Map<String, Object>> existingCbPlans = cassandraOperation.getRecordsByProperties(
@@ -116,11 +119,11 @@ public class CbPlanCacheMgr {
                 null);
         if (existingCbPlans == null) {
             log.error("Failed to read cassandra for cb plan, for PlanIds: {}", planIds);
-            return Collections.emptyList();
+            return new ArrayList<>();
         }
 
         activeCbPlans = existingCbPlans.stream()
-                .filter(plan -> Constants.LIVE.equalsIgnoreCase((String) plan.get(Constants.STATUS))).toList();
+                .filter(plan -> Constants.LIVE.equalsIgnoreCase((String) plan.get(Constants.STATUS))).collect(Collectors.toList());
         //TODO - Need to remove draftData (if available) and also contextData.accessControl
         log.info("Found {} CB Plans for orgId: {}, active count: {}", existingCbPlans.size(), orgId, activeCbPlans.size());
         cbPlanCache.put(orgId, activeCbPlans);
