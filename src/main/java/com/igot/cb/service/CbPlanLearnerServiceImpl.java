@@ -141,7 +141,7 @@ public class CbPlanLearnerServiceImpl {
                         if (MapUtils.isNotEmpty(contentDetails)) {
                             //if (Constants.LIVE.equalsIgnoreCase((String) contentDetails.get(Constants.STATUS))) {
                             if (courseId.contains("_rc")) {
-                                if (Constants.VERIFIED.equalsIgnoreCase(userProfile.get(Constants.PROFILE_STATUS_KEY).toLowerCase())){
+                                if (Constants.VERIFIED.equalsIgnoreCase(userProfile.get(Constants.PROFILE_STATUS_KEY))) {
                                     Map<String, Object> secureSettings = (Map<String, Object>) contentDetails.get(Constants.SECURE_SETTINGS);
 
                                     if (MapUtils.isNotEmpty(secureSettings)) {
@@ -266,7 +266,7 @@ public class CbPlanLearnerServiceImpl {
                 userProfile.put(Constants.DESIGNATION, (String) professionalDetails.get(Constants.DESIGNATION));
                 userProfile.put(Constants.GROUP, (String) professionalDetails.get(Constants.GROUP));
             }
-            userProfile.put(Constants.PROFILE_STATUS_KEY.toLowerCase(),
+            userProfile.put(Constants.PROFILE_STATUS_KEY,
                     (String) profileDetails.get(Constants.PROFILE_STATUS_KEY));
             Map<String, Object> cadreDetails = (Map<String, Object>) profileDetails.get(Constants.CADRE_DETAILS);
             boolean centralDeputation = false;
