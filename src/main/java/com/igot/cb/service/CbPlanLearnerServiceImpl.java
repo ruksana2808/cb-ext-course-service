@@ -338,10 +338,11 @@ public class CbPlanLearnerServiceImpl {
                     }
                 } else {
                     List<String> criteriaValues = (rawCriteriaValue instanceof List<?>)
-                            ? ((List<?>) rawCriteriaValue).stream().map(String::valueOf).toList()
-                            : Collections.singletonList(String.valueOf(rawCriteriaValue));
-
-                    String userCriteriaValue = String.valueOf(userProfile.get(criteriaKey));
+                            ? ((List<?>) rawCriteriaValue).stream()
+                                    .map(value -> String.valueOf(value).toLowerCase().trim()).toList()
+                            : Collections.singletonList(String.valueOf(rawCriteriaValue).toLowerCase().trim());
+                    
+                    String userCriteriaValue = String.valueOf(userProfile.get(criteriaKey)).toLowerCase().trim();
 
                     if (StringUtils.isEmpty(userCriteriaValue) || !criteriaValues.contains(userCriteriaValue)) {
                         log.debug("User does not match criteria key: {} in group: {}", criteriaKey, userGroupName);
