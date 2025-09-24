@@ -45,7 +45,7 @@ public class CbPlanCacheMgr {
             propertiesMap.put(Constants.PLAN_YEAR, "ALL");
             allCbPlanList = cassandraOperation.getRecordsByProperties(
                     Constants.KEYSPACE_SUNBIRD,
-                    Constants.TABLE_CB_PLAN_V2_LOOKUP_BY_ORG,
+                    Constants.TABLE_CB_PLAN_V2_LOOKUP_BY_ALL_ORG,
                     propertiesMap,
                     new ArrayList<>(),
                     null);
@@ -121,6 +121,7 @@ public class CbPlanCacheMgr {
 
         activeCbPlans = existingCbPlans.stream()
                 .filter(plan -> Constants.LIVE.equalsIgnoreCase((String) plan.get(Constants.STATUS))).toList();
+        //TODO - Need to remove draftData (if available) and also contextData.accessControl
         log.info("Found {} CB Plans for orgId: {}, active count: {}", existingCbPlans.size(), orgId, activeCbPlans.size());
         cbPlanCache.put(orgId, activeCbPlans);
         return activeCbPlans;
