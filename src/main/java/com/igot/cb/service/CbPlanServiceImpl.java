@@ -1099,10 +1099,11 @@ public class CbPlanServiceImpl {
                     // Try full ISO-8601 datetime first
                     return Date.from(Instant.parse(str));
                 } catch (DateTimeParseException e) {
-                    // Fallback for date-only strings "yyyy-MM-dd". Business rule: interpret as END OF DAY 23:59:00 local time
+                    // Fallback for date-only strings "yyyy-MM-dd".
+                    // Business rule: treat the provided calendar date as its END OF DAY 23:59:59 *in UTC* (no local timezone shift).
+                    // Example: "2026-01-31" -> 2026-01-31T23:59:59Z (so it will NOT become previous day when viewed in UTC)
                     LocalDate localDate = LocalDate.parse(str, DateTimeFormatter.ISO_LOCAL_DATE);
-                    // Set to 23:59:59. Using system default zone so that stored instant reflects local end-of-day.
-                    return Date.from(localDate.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant());
+                    return Date.from(localDate.atTime(23, 59, 59).atZone(java.time.ZoneOffset.UTC).toInstant());
                 }
             } else if (endDateObj instanceof Instant) {
                 return Date.from((Instant) endDateObj);
