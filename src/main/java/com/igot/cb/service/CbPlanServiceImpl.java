@@ -1100,10 +1100,11 @@ public class CbPlanServiceImpl {
                     return Date.from(Instant.parse(str));
                 } catch (DateTimeParseException e) {
                     // Fallback for date-only strings "yyyy-MM-dd".
-                    // Business rule: treat the provided calendar date as its END OF DAY 23:59:59 *in UTC* (no local timezone shift).
-                    // Example: "2026-01-31" -> 2026-01-31T23:59:59Z (so it will NOT become previous day when viewed in UTC)
+                    // Business rule (updated): interpret the date using Asia/Kolkata zone and set time to 23:59:59 in that zone.
+                    // Example: "2026-01-31" -> 2026-01-31T23:59:59+05:30 which is 2026-01-31T18:29:59Z stored in Cassandra.
                     LocalDate localDate = LocalDate.parse(str, DateTimeFormatter.ISO_LOCAL_DATE);
-                    return Date.from(localDate.atTime(23, 59, 59).atZone(java.time.ZoneOffset.UTC).toInstant());
+                    ZoneId kolkata = ZoneId.of("Asia/Kolkata");
+                    return Date.from(localDate.atTime(23, 59, 59).atZone(kolkata).toInstant());
                 }
             } else if (endDateObj instanceof Instant) {
                 return Date.from((Instant) endDateObj);
