@@ -2,10 +2,10 @@ package com.igot.cb.controller;
 
 import java.util.Map;
 
+import org.igot.common.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.service.CourseAccessServiceImpl;
 import com.igot.cb.util.Constants;
 

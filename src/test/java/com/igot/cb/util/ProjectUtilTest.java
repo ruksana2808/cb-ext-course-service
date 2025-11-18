@@ -1,6 +1,6 @@
 package com.igot.cb.util;
 
-import com.igot.cb.model.ApiResponse;
+import org.igot.common.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 

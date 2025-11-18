@@ -12,9 +12,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
-import com.igot.cb.model.ApiRespParam;
-import com.igot.cb.model.ApiResponse;
+import org.igot.common.ApiResponse;
+import org.igot.common.ApiRespParam;
 import com.igot.cb.service.AccessSettingsServiceImpl;
 
 @ExtendWith(MockitoExtension.class)

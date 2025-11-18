@@ -2,7 +2,7 @@ package com.igot.cb.controller;
 
 import com.igot.cb.elasticsearch.dto.SearchCriteria;
 import com.igot.cb.model.ApiRequest;
-import com.igot.cb.model.ApiResponse;
+import org.igot.common.ApiResponse;
 import com.igot.cb.service.AccessSettingMigrationServiceImpl;
 import com.igot.cb.service.CbPlanLearnerServiceImpl;
 import com.igot.cb.service.CbPlanServiceImpl;

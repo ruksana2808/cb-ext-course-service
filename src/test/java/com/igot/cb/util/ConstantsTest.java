@@ -20,7 +20,7 @@ class ConstantsTest {
         assertEquals("sunbird", Constants.KEYSPACE_SUNBIRD);
         assertEquals(".", Constants.DOT);
         assertEquals("success", Constants.SUCCESS);
-        assertEquals("Failed", Constants.FAILED);
+        assertEquals("FAILED", Constants.FAILED);
         assertEquals("asc", Constants.ASC);
         assertEquals("must", Constants.MUST);
         assertEquals("filter", Constants.FILTER);

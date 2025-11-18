@@ -1,6 +1,6 @@
 package com.igot.cb.cassandra;
 
-import com.igot.cb.model.ApiResponse;
+import org.igot.common.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

@@ -228,8 +228,19 @@
             <artifactId>caffeine</artifactId>
             <version>3.2.2</version>
         </dependency>
-	</dependencies>
 
+		<dependency>
+			<groupId>com.github.karthik-tarento</groupId>
+			<artifactId>common-util</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+	<repositories>
+		<repository>
+			<id>github</id>
+			<url>https://maven.pkg.github.com/karthik-tarento/common-util</url>
+		</repository>
+	</repositories>
 	<build>
 		<plugins>
 			<plugin>

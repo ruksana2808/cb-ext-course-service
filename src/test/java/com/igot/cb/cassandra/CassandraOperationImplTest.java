@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.util.*;
 
+import org.igot.common.ApiResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.*;
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.util.Constants;
 
 @ExtendWith(MockitoExtension.class)
@@ -69,7 +69,7 @@ class CassandraOperationImplTest {
             ApiResponse response = (ApiResponse) cassandraOperation.insertRecord(keyspaceName, tableName, request);
 
             // Assert
-            assertEquals("Failed", response.get(Constants.RESPONSE));
+            assertEquals(Constants.FAILED, response.get(Constants.RESPONSE));
             assertNotNull(response.get(Constants.ERROR_MESSAGE));
         }
     }

@@ -1,9 +1,9 @@
 package com.igot.cb.cassandra;
 
-import com.igot.cb.model.ApiResponse;
-
 import java.util.List;
 import java.util.Map;
+
+import org.igot.common.ApiResponse;
 
 /**
  * @author Mahesh RV

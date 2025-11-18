@@ -8,9 +8,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cache.RedisCacheMgr;
-import com.igot.cb.cassandra.exceptions.CustomException;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.kafka.common.protocol.types.Field;
+import org.igot.common.ApiResponse;
+import org.igot.common.auth.AccessTokenValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -19,9 +19,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import com.igot.cb.cache.AccessSettingRuleCacheMgr;
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.model.CachedAccessSettingRule;
-import com.igot.cb.util.AccessTokenValidator;
 import com.igot.cb.util.Constants;
 
 import lombok.extern.slf4j.Slf4j;

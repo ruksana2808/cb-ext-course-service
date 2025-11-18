@@ -1,8 +1,9 @@
 package com.igot.cb.service;
 
-import com.igot.cb.model.ApiResponse;
 
 import java.util.Map;
+
+import org.igot.common.ApiResponse;
 
 public interface NotificationService {
 

@@ -2,7 +2,6 @@ package com.igot.cb.service;
 
 import com.datastax.oss.driver.internal.core.util.CollectionsUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igot.cb.util.AccessTokenValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -10,13 +9,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
+import org.igot.common.ApiResponse;
+import org.igot.common.auth.AccessTokenValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
 import com.igot.cb.cassandra.CassandraOperation;
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.user.UserUtilityService;
 import com.igot.cb.util.Constants;
 import com.igot.cb.util.CbExtServerProperties;
