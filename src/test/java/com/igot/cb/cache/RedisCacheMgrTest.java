@@ -11,6 +11,7 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class RedisCacheMgrTest {
@@ -57,18 +58,17 @@ class RedisCacheMgrTest {
         String redisKey = "accessRules";
         String fieldKey = "rule1";
         Map<String, Object> fieldData = Map.of("key", "value");
-
+        ReflectionTestUtils.setField(redisCacheMgr, "ttlSeconds", 600);
         when(jedisPool.getResource()).thenReturn(jedis);
         when(jedis.hset(eq(redisKey), eq(fieldKey), anyString())).thenReturn(1L);
-        when(jedis.expire(redisKey, 7200)).thenReturn(1L);
-
+        when(jedis.expire(redisKey, 600)).thenReturn(1L);
         boolean result = redisCacheMgr.setAccessSettingRuleCache(redisKey, fieldKey, fieldData);
-
         assertTrue(result);
         verify(jedis).hset(eq(redisKey), eq(fieldKey), anyString());
-        verify(jedis).expire(redisKey, 7200);
+        verify(jedis).expire(redisKey, 600);
         verify(jedis).close();
     }
+
 
     @Test
     void testSetAccessSettingRuleCache_exception() {
@@ -148,15 +148,13 @@ class RedisCacheMgrTest {
 
     @Test
     void testPutInCache_success() {
+        ReflectionTestUtils.setField(redisCacheMgr, "ttlSeconds", 600);
         String key = "testKey";
         String value = "testValue";
-
         when(jedisPool.getResource()).thenReturn(jedis);
-        when(jedis.setex(key, 7200, value)).thenReturn("OK");
-
+        when(jedis.setex(key, 600, value)).thenReturn("OK");
         assertDoesNotThrow(() -> redisCacheMgr.putInCache(key, value));
-        
-        verify(jedis).setex(key, 7200, value);
+        verify(jedis).setex(key, 600, value);
         verify(jedis).close();
     }
 
