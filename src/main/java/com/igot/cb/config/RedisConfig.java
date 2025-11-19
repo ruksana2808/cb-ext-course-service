@@ -36,13 +36,19 @@ public class RedisConfig {
      *
      * @return JedisPool instance configured with Redis settings.
      */
-    @Bean(name = "jedisPool")
+    @Bean(name = "jedisPool", destroyMethod = "close")
     public JedisPool jedisPool() {
         System.setProperty("org.apache.commons.pool2.registerMbeans", "false");
 
         JedisPoolConfig poolConfig = buildPoolConfig();
-        return new JedisPool(poolConfig, propertiesCache.getProperty(Constants.REDIS_HOST),
+        JedisPool pool = new JedisPool(poolConfig, propertiesCache.getProperty(Constants.REDIS_HOST),
                 Integer.parseInt(propertiesCache.getProperty(Constants.REDIS_PORT)));
+
+        log.info("JedisPool initialized successfully with host: {} and port: {}",
+                propertiesCache.getProperty(Constants.REDIS_HOST),
+                propertiesCache.getProperty(Constants.REDIS_PORT));
+
+        return pool;
     }
 
     private JedisPoolConfig buildPoolConfig() {

@@ -20,11 +20,15 @@ import org.springframework.web.client.RestTemplate;
  * @author Mahesh RV
  * @author Ruksana
  */
-@ComponentScan(basePackages = "com.igot.cb")
+@ComponentScan(basePackages = {"com.igot.cb", "org.igot.common"})
 @EntityScan("com.igot.cb")
 @SpringBootApplication
 public class CbExtCourseServiceApplication {
 
+	static {
+		// Disable JMX registration for Apache Commons Pool2 to prevent MBean conflicts on restart
+		System.setProperty("org.apache.commons.pool2.registerMbeans", "false");
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(CbExtCourseServiceApplication.class, args);
