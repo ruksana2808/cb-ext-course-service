@@ -3,11 +3,11 @@ package com.igot.cb.util;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.UUID;
+
+import org.igot.common.ApiRespParam;
+import org.igot.common.ApiResponse;
 import org.joda.time.DateTime;
 import org.springframework.http.HttpStatus;
-
-import com.igot.cb.model.ApiRespParam;
-import com.igot.cb.model.ApiResponse;
 
 public class ProjectUtil {
 

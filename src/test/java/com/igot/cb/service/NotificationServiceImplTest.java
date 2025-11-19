@@ -1,9 +1,9 @@
 package com.igot.cb.service;
 
 import com.igot.cb.cassandra.CassandraOperation;
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.user.UserUtilityService;
-import com.igot.cb.util.AccessTokenValidator;
+
+import org.igot.common.auth.AccessTokenValidator;
 import com.igot.cb.util.CbExtServerProperties;
 import com.igot.cb.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,32 +17,14 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
 class NotificationServiceImplTest {
-
-    // Use a concrete test implementation instead of mocking to avoid ByteBuddy issues on Java 23
-    private static class TestAccessTokenValidator extends AccessTokenValidator {
-        private String userIdToReturn = "invokerUser";
-
-        public TestAccessTokenValidator() {
-            super(null);
-        }
-
-        public void setUserIdToReturn(String userId) {
-            this.userIdToReturn = userId;
-        }
-
-        @Override
-        public String fetchUserIdFromAccessToken(String accessToken, ApiResponse response) {
-            return userIdToReturn;
-        }
-    }
 
     // Use a concrete test implementation for OutboundRequestHandlerServiceImpl
     private static class TestOutboundRequestHandlerService extends OutboundRequestHandlerServiceImpl {
@@ -105,7 +87,9 @@ class NotificationServiceImplTest {
 
     private NotificationServiceImpl notificationService;
 
-    private final TestAccessTokenValidator testAccessTokenValidator = new TestAccessTokenValidator();
+    @Mock
+    private AccessTokenValidator accessTokenValidator;
+
     private final TestOutboundRequestHandlerService testOutboundRequestHandler = new TestOutboundRequestHandlerService();
     private final TestCbExtServerProperties testProps = new TestCbExtServerProperties();
 
@@ -117,16 +101,21 @@ class NotificationServiceImplTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        MockitoAnnotations.openMocks(this);
         notificationService = new NotificationServiceImpl();
 
         // Create mocks manually to avoid @Mock annotation
         cassandraOperation = mock(CassandraOperation.class);
         userUtilityService = mock(UserUtilityService.class);
 
+        // Setup default mock behavior for accessTokenValidator
+        when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any()))
+                .thenReturn("invokerUser");
+
         // Inject test AccessTokenValidator using reflection
         Field accessTokenValidatorField = NotificationServiceImpl.class.getDeclaredField("accessTokenValidator");
         accessTokenValidatorField.setAccessible(true);
-        accessTokenValidatorField.set(notificationService, testAccessTokenValidator);
+        accessTokenValidatorField.set(notificationService, accessTokenValidator);
 
         Field cassandraOperationField = NotificationServiceImpl.class.getDeclaredField("cassandraOperation");
         cassandraOperationField.setAccessible(true);

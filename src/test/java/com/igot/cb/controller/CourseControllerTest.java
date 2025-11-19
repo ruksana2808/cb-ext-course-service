@@ -7,9 +7,9 @@ import static org.mockito.Mockito.verify;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.service.ContentStateServiceImpl;
 
+import org.igot.common.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

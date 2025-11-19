@@ -7,6 +7,9 @@ import static org.mockito.Mockito.when;
 import java.util.Map;
 
 import com.igot.cb.service.AccessSettingMigrationServiceImpl;
+
+import org.igot.common.ApiRespParam;
+import org.igot.common.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,8 +18,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.igot.cb.model.ApiRespParam;
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.service.AccessSettingsServiceImpl;
 
 @ExtendWith(MockitoExtension.class)

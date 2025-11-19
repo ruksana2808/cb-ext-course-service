@@ -1,8 +1,9 @@
 package com.igot.cb.controller;
 
-import com.igot.cb.model.ApiRespParam;
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.service.NotificationService;
+
+import org.igot.common.ApiRespParam;
+import org.igot.common.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

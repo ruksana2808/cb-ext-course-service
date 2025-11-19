@@ -2,9 +2,9 @@ package com.igot.cb.service;
 
 import com.igot.cb.util.Constants;
 import com.igot.cb.cassandra.CassandraOperation;
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.util.PayloadValidation;
 
+import org.igot.common.ApiResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

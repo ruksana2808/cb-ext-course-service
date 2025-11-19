@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import com.igot.cb.elasticsearch.service.EsUtilService;
 import org.apache.commons.collections4.MapUtils;
+import org.igot.common.ApiResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.igot.cb.cache.IdMapCacheMgr;
 import com.igot.cb.cassandra.CassandraOperation;
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.util.BitSetDeserializer;
 import com.igot.cb.util.BitSetSerializer;
 import com.igot.cb.util.Constants;

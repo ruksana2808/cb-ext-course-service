@@ -2,6 +2,7 @@ package com.igot.cb.controller;
 
 import java.util.Map;
 
+import org.igot.common.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.service.AccessSettingMigrationServiceImpl;
 import com.igot.cb.service.AccessSettingsServiceImpl;
 import com.igot.cb.util.Constants;

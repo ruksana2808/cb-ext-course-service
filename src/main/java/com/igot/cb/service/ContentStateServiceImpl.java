@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.igot.common.ApiResponse;
+import org.igot.common.auth.AccessTokenValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,8 +27,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.cassandra.exceptions.CustomException;
-import com.igot.cb.model.ApiResponse;
-import com.igot.cb.util.AccessTokenValidator;
 import com.igot.cb.util.Constants;
 import com.igot.cb.util.ProjectUtil;
 

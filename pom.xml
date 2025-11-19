@@ -228,6 +228,12 @@
             <artifactId>caffeine</artifactId>
             <version>3.2.2</version>
         </dependency>
+
+		<dependency>
+			<groupId>io.github.karthik-tarento</groupId>
+			<artifactId>common-util</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

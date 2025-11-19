@@ -4,10 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cassandra.CassandraOperation;
-import com.igot.cb.model.ApiResponse;
-import com.igot.cb.util.AccessTokenValidator;
 import com.igot.cb.util.Constants;
 import com.igot.cb.util.ProjectUtil;
+
+import org.igot.common.ApiResponse;
+import org.igot.common.auth.AccessTokenValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;

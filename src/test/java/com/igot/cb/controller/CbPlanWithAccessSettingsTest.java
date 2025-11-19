@@ -2,11 +2,12 @@ package com.igot.cb.controller;
 
 import com.igot.cb.elasticsearch.dto.SearchCriteria;
 import com.igot.cb.model.ApiRequest;
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.service.AccessSettingMigrationServiceImpl;
 import com.igot.cb.service.CbPlanLearnerServiceImpl;
 import com.igot.cb.service.CbPlanServiceImpl;
 import com.igot.cb.util.Constants;
+
+import org.igot.common.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

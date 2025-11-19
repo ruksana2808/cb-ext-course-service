@@ -30,7 +30,7 @@ public class Constants {
     public static final String CLOSING_BRACE = ");";
     public static final String RESPONSE = "response";
     public static final String SUCCESS = "success";
-    public static final String FAILED = "Failed";
+    public static final String FAILED = "FAILED";
     public static final String ERROR_MESSAGE = "errmsg";
     public static final String INDEX_TYPE = "_doc";
     public static final String REDIS_KEY_PREFIX = "community_";

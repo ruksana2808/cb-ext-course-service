@@ -18,6 +18,8 @@ import static org.mockito.Mockito.when;
 import java.util.*;
 
 import com.igot.cb.elasticsearch.service.EsUtilService;
+
+import org.igot.common.ApiResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,7 +30,6 @@ import org.springframework.http.HttpStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cache.IdMapCacheMgr;
 import com.igot.cb.cassandra.CassandraOperation;
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.util.Constants;
 
 @ExtendWith(MockitoExtension.class)

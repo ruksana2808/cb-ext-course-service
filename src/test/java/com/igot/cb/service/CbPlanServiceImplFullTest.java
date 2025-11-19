@@ -17,8 +17,10 @@ import com.igot.cb.elasticsearch.dto.SearchCriteria;
 import com.igot.cb.elasticsearch.dto.SearchResult;
 import com.igot.cb.elasticsearch.service.EsUtilService;
 import com.igot.cb.model.ApiRequest;
-import com.igot.cb.model.ApiResponse;
 import com.igot.cb.util.*;
+
+import org.igot.common.ApiResponse;
+import org.igot.common.auth.AccessTokenValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -651,7 +653,7 @@ public class CbPlanServiceImplFullTest {
         when(requestValidator.validateCbPlanCreateRequest(any(ApiRequest.class), anyBoolean(), anyString()))
                 .thenReturn(List.of("Error1"));
         ApiResponse response = cbPlanService.createCbPlan(apiRequest, "org1", "token123");
-        assertEquals("Failed", response.getParams().getStatus());
+        assertEquals(Constants.FAILED, response.getParams().getStatus());
         assertEquals(HttpStatus.BAD_REQUEST, response.getResponseCode());
     }
 
