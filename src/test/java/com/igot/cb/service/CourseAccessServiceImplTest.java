@@ -13,6 +13,7 @@ import com.igot.cb.cache.IdMapCacheMgr;
 
 import org.igot.common.ApiResponse;
 import org.igot.common.auth.AccessTokenValidator;
+import org.igot.common.service.OutboundRequestHandlerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

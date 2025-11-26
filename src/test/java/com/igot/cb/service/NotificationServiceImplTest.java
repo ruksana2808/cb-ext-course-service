@@ -4,6 +4,7 @@ import com.igot.cb.user.UserUtilityService;
 
 import org.igot.common.auth.AccessTokenValidator;
 import org.igot.common.cassandra.CassandraOperation;
+import org.igot.common.service.OutboundRequestHandlerServiceImpl;
 
 import com.igot.cb.util.CbExtServerProperties;
 import com.igot.cb.util.Constants;

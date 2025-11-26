@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.igot.common.service.OutboundRequestHandlerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +29,6 @@ import org.mockito.quality.Strictness;
 import org.springframework.core.ParameterizedTypeReference;
 
 import com.igot.cb.model.CachedIdMap;
-import com.igot.cb.service.OutboundRequestHandlerServiceImpl;
 import com.igot.cb.util.Constants;
 import com.igot.cb.util.PropertiesCache;
 
