@@ -4,9 +4,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import com.igot.cb.cassandra.CassandraOperation;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.igot.common.cassandra.CassandraOperation;
 import org.springframework.stereotype.Component;
 
 import com.igot.cb.model.CachedAccessSettingRule;

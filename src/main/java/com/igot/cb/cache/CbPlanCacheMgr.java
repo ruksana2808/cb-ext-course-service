@@ -3,7 +3,6 @@ package com.igot.cb.cache;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -11,17 +10,13 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.igot.common.cassandra.CassandraOperation;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.expression.spel.ast.BooleanLiteral;
 import org.springframework.stereotype.Component;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.util.Constants;
 
 import lombok.extern.slf4j.Slf4j;

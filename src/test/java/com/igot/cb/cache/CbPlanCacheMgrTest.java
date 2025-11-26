@@ -1,8 +1,9 @@
 package com.igot.cb.cache;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.util.Constants;
+
+import org.igot.common.cassandra.CassandraOperation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

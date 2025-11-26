@@ -1,10 +1,10 @@
 package com.igot.cb.user.service;
 
-import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.user.UserUtilityService;
 import com.igot.cb.util.Constants;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.igot.common.cassandra.CassandraOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

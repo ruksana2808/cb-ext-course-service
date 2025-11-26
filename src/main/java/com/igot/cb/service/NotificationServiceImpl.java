@@ -1,8 +1,16 @@
 package com.igot.cb.service;
 
-import com.datastax.oss.driver.internal.core.util.CollectionsUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -11,19 +19,18 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.igot.common.ApiResponse;
 import org.igot.common.auth.AccessTokenValidator;
+import org.igot.common.cassandra.CassandraOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
-import com.igot.cb.cassandra.CassandraOperation;
-import com.igot.cb.user.UserUtilityService;
-import com.igot.cb.util.Constants;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.util.CbExtServerProperties;
+import com.igot.cb.util.Constants;
 import com.igot.cb.util.ProjectUtil;
 
-import java.io.StringWriter;
-import java.util.*;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -33,9 +40,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Autowired
     private CassandraOperation cassandraOperation;
-
-    @Autowired
-    private UserUtilityService userUtilityService; // kept as fallback
 
     @Autowired
     private OutboundRequestHandlerServiceImpl outboundRequestHandlerService;

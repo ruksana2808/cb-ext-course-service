@@ -2,13 +2,12 @@ package com.igot.cb.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.igot.common.cassandra.CassandraOperation;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -16,7 +15,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cache.IdMapCacheMgr;
 import com.igot.cb.cache.RedisCacheMgr;
-import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.util.Constants;
 
 import lombok.extern.slf4j.Slf4j;

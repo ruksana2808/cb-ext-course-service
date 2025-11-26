@@ -1,9 +1,10 @@
 package com.igot.cb.service;
 
-import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.user.UserUtilityService;
 
 import org.igot.common.auth.AccessTokenValidator;
+import org.igot.common.cassandra.CassandraOperation;
+
 import com.igot.cb.util.CbExtServerProperties;
 import com.igot.cb.util.Constants;
 import org.junit.jupiter.api.BeforeEach;
@@ -95,7 +96,6 @@ class NotificationServiceImplTest {
 
     // Still need to mock these as they are interfaces and easier to mock
     private CassandraOperation cassandraOperation;
-    private UserUtilityService userUtilityService;
 
     private final String authToken = "validToken";
 
@@ -106,7 +106,6 @@ class NotificationServiceImplTest {
 
         // Create mocks manually to avoid @Mock annotation
         cassandraOperation = mock(CassandraOperation.class);
-        userUtilityService = mock(UserUtilityService.class);
 
         // Setup default mock behavior for accessTokenValidator
         when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any()))
@@ -120,10 +119,6 @@ class NotificationServiceImplTest {
         Field cassandraOperationField = NotificationServiceImpl.class.getDeclaredField("cassandraOperation");
         cassandraOperationField.setAccessible(true);
         cassandraOperationField.set(notificationService, cassandraOperation);
-
-        Field userUtilityServiceField = NotificationServiceImpl.class.getDeclaredField("userUtilityService");
-        userUtilityServiceField.setAccessible(true);
-        userUtilityServiceField.set(notificationService, userUtilityService);
 
         Field outboundRequestHandlerField = NotificationServiceImpl.class.getDeclaredField("outboundRequestHandlerService");
         outboundRequestHandlerField.setAccessible(true);

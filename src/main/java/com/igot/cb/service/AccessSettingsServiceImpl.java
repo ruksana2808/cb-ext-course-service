@@ -8,12 +8,12 @@ import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.igot.common.ApiResponse;
+import org.igot.common.cassandra.CassandraOperation;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.cassandra.exceptions.CustomException;
 import com.igot.cb.util.Constants;
 import com.igot.cb.util.PayloadValidation;
