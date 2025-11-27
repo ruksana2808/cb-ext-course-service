@@ -204,7 +204,7 @@ public class CbPlanServiceImpl {
                     response.setResponseCode(HttpStatus.BAD_REQUEST);
                     return response;
                 }
-                Map<String, Object> updatedRequest = prepareCbPlanForUpdate(updatedCbPlan, existingCbPlan, userId);
+                Map<String, Object> updatedRequest = prepareCbPlanForUpdate(updatedCbPlan, userId);
                 Map<String, Object> resp = cassandraOperation.updateRecord(Constants.KEYSPACE_SUNBIRD,
                         Constants.TABLE_CB_PLAN_V2, updatedRequest, Map.of(Constants.PLAN_ID, cbPlanId));
                 if (resp.get(Constants.RESPONSE).equals(Constants.SUCCESS)) {
@@ -427,7 +427,7 @@ public class CbPlanServiceImpl {
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException("Invalid endDate format: " + endDateObj, e);
+            throw new CustomException(Constants.PARSE_ERROR, "Invalid endDate format: " + endDateObj, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return null;
     }
@@ -555,7 +555,7 @@ public class CbPlanServiceImpl {
 
     private Map<String, Object> populateReadData(Map<String, Object> cbPlan) throws Exception {
         Map<String, Object> enrichData = new HashMap<>();
-        List<String> contentTypeInfo = new ArrayList<>();
+        List<String> contentTypeInfo;
         if ((StringUtils.isNotBlank((String) cbPlan.get(Constants.DRAFT_DATA)) && !((String)cbPlan.get(Constants.DRAFT_DATA)).equals("{}")) 
                         && Constants.LIVE.equalsIgnoreCase((String) cbPlan.get(Constants.STATUS))) {
             CbPlanDto cbPlanDto = mapper.readValue((String) cbPlan.get(Constants.DRAFT_DATA), CbPlanDto.class);
@@ -601,7 +601,7 @@ public class CbPlanServiceImpl {
         return enrichData;
     }
 
-    public ApiResponse searchCbPlan(SearchCriteria searchCriteria, String userOrgId, String token) {
+    public ApiResponse searchCbPlan(SearchCriteria searchCriteria, String token) {
         log.info("CbPlanService:searchCbPlan::inside method");
         ApiResponse response = ProjectUtil.createDefaultResponse(Constants.API_COMMUNITY_SEARCH);
         try {
@@ -611,10 +611,6 @@ public class CbPlanServiceImpl {
             }
             SearchResult searchResult = esUtilService.searchDocuments(serverProperties.getCpPlanIndex(),
                     searchCriteria, serverProperties.getElasticCbPlanJsonPath());
-            List<Map<String, Object>> cbPlans = mapper.convertValue(
-                    searchResult.getData(),
-                    new TypeReference<List<Map<String, Object>>>() {
-                    });
             if (!searchResult.getData().isEmpty()) {
                 List<Map<String, Object>> dataNode = searchResult.getData();
 
@@ -624,11 +620,10 @@ public class CbPlanServiceImpl {
                     for (Map<String, Object> item : dataNode) {
                         // Create a copy of item so we don’t mutate original
                         Map<String, Object> enrichedItem = new HashMap<>(item);
-                        String createdBy = (String) enrichedItem.get(Constants.CREATED_BY);
 
                         if (item.containsKey(Constants.CREATED_BY) && item.get(Constants.CREATED_BY) != null) {
                             Object createdByObj = item.get(Constants.CREATED_BY);
-                            Map<String, Object> userInfoMap = new HashMap<>();
+                            Map<String, Object> userInfoMap;
                             if (createdByObj instanceof String && !((String) createdByObj).trim().isEmpty()) {
                                 // fetch user details from DB
                                 userInfoMap = userAndOrgService.readUserProfile(
@@ -636,7 +631,6 @@ public class CbPlanServiceImpl {
                                         Arrays.asList(Constants.FIRSTNAME, Constants.USER_ID)
                                 );
                                 if (userInfoMap != null) {
-
                                     enrichedItem.put(Constants.CREATED_BY_NAME,
                                             userInfoMap.get(Constants.FIRSTNAME));
                                     enrichedItem.put(Constants.CREATED_BY, item.get(Constants.CREATED_BY));
@@ -782,49 +776,6 @@ public class CbPlanServiceImpl {
         return response;
     }
 
-    private ApiResponse archiveCustomOrgLookup(String cbPlanId, List<String> orgIdList) {
-        ApiResponse response = new ApiResponse();
-        try {
-            if (CollectionUtils.isEmpty(orgIdList)) {
-                response.getParams().setStatus(Constants.FAILED);
-                response.getParams().setErr("orgIdList is empty. Cannot archive lookup entries.");
-                return response;
-            }
-
-            for (String orgId : orgIdList) {
-                // attributes to update
-                Map<String, Object> updateAttributes = new HashMap<>();
-                updateAttributes.put(Constants.IS_ACTIVE, false);
-                // primary/composite key for lookup
-                Map<String, Object> compositeKey = new HashMap<>();
-                compositeKey.put(Constants.PLAN_ID_RQST, cbPlanId);
-                compositeKey.put(Constants.ORG_ID_RQST, orgId);
-
-                Map<String, Object> updateResp = cassandraOperation.updateRecord(
-                        Constants.KEYSPACE_SUNBIRD,
-                        Constants.TABLE_CB_PLAN_V2_LOOKUP_BY_ORG,
-                        updateAttributes,
-                        compositeKey);
-
-                if (!Constants.SUCCESS.equals(updateResp.get(Constants.RESPONSE))) {
-                    response.getParams().setStatus(Constants.FAILED);
-                    response.getParams().setErr("Failed to archive record for orgId: " + orgId);
-                    return response;
-                }
-            }
-            response.put(Constants.RESPONSE, Constants.SUCCESS);
-            response.getParams().setStatus(Constants.SUCCESS);
-            response.getResult().put("message", "Lookup entries archived successfully for all orgIds");
-
-        } catch (Exception e) {
-            response.getParams().setStatus(Constants.FAILED);
-            response.getParams().setErr("Exception while archiving org lookup entries: " + e.getMessage());
-            log.error("Error archiving org lookup entries for CB Plan: " + cbPlanId, e);
-        }
-
-        return response;
-    }
-
     private Map<String, Object> prepareCbPlanForInsert(Map<String, Object> incomingRequest, String userId)
             throws JsonProcessingException {
         Map<String, Object> cbPlan = new HashMap<>();
@@ -849,7 +800,7 @@ public class CbPlanServiceImpl {
     }
 
     private Map<String, Object> prepareCbPlanForUpdate(Map<String, Object> incomingRequest,
-            Map<String, Object> existingCbPlan, String userId) throws JsonProcessingException {
+            String userId) throws JsonProcessingException {
         Map<String, Object> updatedRequest = new HashMap<>();
         updatedRequest.put(Constants.UPDATED_BY, userId);
         updatedRequest.put(Constants.UPDATED_AT, Instant.now());

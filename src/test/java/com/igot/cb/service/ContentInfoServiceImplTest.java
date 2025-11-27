@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.igot.common.PropertiesCache;
 import org.igot.common.service.OutboundRequestHandlerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cache.RedisCacheMgr;
 import com.igot.cb.util.Constants;
-import com.igot.cb.util.PropertiesCache;
 
 @ExtendWith(MockitoExtension.class)
 class ContentInfoServiceImplTest {
@@ -32,6 +32,9 @@ class ContentInfoServiceImplTest {
 
     @Mock
     private OutboundRequestHandlerServiceImpl outboundRequestHandlerService;
+
+    @Mock
+    private PropertiesCache propertiesCache;
 
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -43,13 +46,6 @@ class ContentInfoServiceImplTest {
     void init() throws Exception {
         Properties testProps = new Properties();
         testProps.setProperty(Constants.CONTENT_SERVICE_HOST, "http://mock-content");
-
-        PropertiesCache cache = PropertiesCache.getInstance();
-
-        // Use reflection to set private final field
-        var field = PropertiesCache.class.getDeclaredField("configProp");
-        field.setAccessible(true);
-        field.set(cache, testProps);
     }
 
     @Test

@@ -8,6 +8,7 @@ import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.igot.cb.util.Constants;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -33,7 +34,7 @@ public class CachedAccessSettingRule {
             this.isArchived = (Boolean) ruleData.getOrDefault("isArchived", false);
             this.cachedTimeMillis = System.currentTimeMillis();
         } catch (Exception e) {
-            throw new CustomException("PARSE_ERROR", "Failed to parse access setting rule: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new CustomException(Constants.PARSE_ERROR, "Failed to parse access setting rule: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -47,7 +48,7 @@ public class CachedAccessSettingRule {
                         new TypeReference<Map<String, Object>>() {
                         });
             } catch (Exception e) {
-                throw new CustomException("PARSE_ERROR", "Failed to parse context data: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+                throw new CustomException(Constants.PARSE_ERROR, "Failed to parse context data: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } else {
             throw new CustomException("INVALID_DATA", "Invalid context data: " + contextDataStr + ", for contextId: " + contextId, HttpStatus.INTERNAL_SERVER_ERROR);

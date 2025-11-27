@@ -133,7 +133,7 @@ class CbPlanWithAccessSettingsTest {
         mockResponse.getParams().setStatus(Constants.SUCCESS);
         mockResponse.setResponseCode(HttpStatus.OK);
         
-        when(cbPlanService.searchCbPlan(any(), anyString(), anyString())).thenReturn(mockResponse);
+        when(cbPlanService.searchCbPlan(any(), anyString())).thenReturn(mockResponse);
 
         ResponseEntity<ApiResponse> response = controller.searchCbPlan(criteria, "token", "orgId");
         

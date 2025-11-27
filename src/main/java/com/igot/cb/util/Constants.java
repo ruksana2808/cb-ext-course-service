@@ -472,6 +472,8 @@ public class Constants {
     public static final String CB_PLAN_FAILED_TO_CREATE = "Failed to Create CB Plan for OrgId: ";
     public static final String CB_PLAN_NOT_FOUND = "CB Plan not found for the given planId: ";
     public static final String FOR_PLAN_ID = " for PlanId: ";
+    public static final String PARSE_ERROR = "PARSE_ERROR";
+
     private Constants() {
     }
 }

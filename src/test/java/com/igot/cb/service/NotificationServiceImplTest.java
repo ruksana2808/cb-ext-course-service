@@ -10,7 +10,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -101,7 +100,6 @@ class NotificationServiceImplTest {
     @BeforeEach
     void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
-        notificationService = new NotificationServiceImpl();
 
         // Create mocks manually to avoid @Mock annotation
         cassandraOperation = mock(CassandraOperation.class);
@@ -110,27 +108,14 @@ class NotificationServiceImplTest {
         when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any()))
                 .thenReturn("invokerUser");
 
-        // Inject test AccessTokenValidator using reflection
-        Field accessTokenValidatorField = NotificationServiceImpl.class.getDeclaredField("accessTokenValidator");
-        accessTokenValidatorField.setAccessible(true);
-        accessTokenValidatorField.set(notificationService, accessTokenValidator);
-
-        Field cassandraOperationField = NotificationServiceImpl.class.getDeclaredField("cassandraOperation");
-        cassandraOperationField.setAccessible(true);
-        cassandraOperationField.set(notificationService, cassandraOperation);
-
-        Field outboundRequestHandlerField = NotificationServiceImpl.class.getDeclaredField("outboundRequestHandlerService");
-        outboundRequestHandlerField.setAccessible(true);
-        outboundRequestHandlerField.set(notificationService, testOutboundRequestHandler);
-
-        Field propsField = NotificationServiceImpl.class.getDeclaredField("props");
-        propsField.setAccessible(true);
-        propsField.set(notificationService, testProps);
-
-        // Inject ObjectMapper to avoid NullPointerException
-        Field objectMapperField = NotificationServiceImpl.class.getDeclaredField("objectMapper");
-        objectMapperField.setAccessible(true);
-        objectMapperField.set(notificationService, new com.fasterxml.jackson.databind.ObjectMapper());
+        // Use the constructor to create the service with all dependencies
+        notificationService = new NotificationServiceImpl(
+                accessTokenValidator,
+                cassandraOperation,
+                testOutboundRequestHandler,
+                testProps,
+                new com.fasterxml.jackson.databind.ObjectMapper()
+        );
     }
 
     private Map<String, Object> buildUserSearchResponse(String email, String firstName) {

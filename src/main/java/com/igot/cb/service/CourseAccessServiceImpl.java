@@ -12,7 +12,6 @@ import org.apache.commons.collections4.MapUtils;
 import org.igot.common.ApiResponse;
 import org.igot.common.auth.AccessTokenValidator;
 import org.igot.common.service.OutboundRequestHandlerServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -36,9 +35,7 @@ public class CourseAccessServiceImpl {
     private final AccessSettingRuleCacheMgr accessSettingRuleCacheMgr;
     private final ContentInfoServiceImpl contentService;
     private final OutboundRequestHandlerServiceImpl outboundRequestHandlerService;
-
-    @Autowired
-    private RedisCacheMgr redisCacheMgr;
+    private final RedisCacheMgr redisCacheMgr;
 
 
     @Value("${content.read.fields}")
@@ -75,12 +72,15 @@ public class CourseAccessServiceImpl {
      * @param accessSettingRuleCacheMgr Cache manager for access setting rules.
      */
     public CourseAccessServiceImpl(AccessTokenValidator accessTokenValidator,
-                                   UserAndOrgServiceImpl userProfileServiceImpl, AccessSettingRuleCacheMgr accessSettingRuleCacheMgr, ContentInfoServiceImpl contentService, OutboundRequestHandlerServiceImpl outboundRequestHandlerService1) {
+            UserAndOrgServiceImpl userProfileServiceImpl, AccessSettingRuleCacheMgr accessSettingRuleCacheMgr,
+            ContentInfoServiceImpl contentService, OutboundRequestHandlerServiceImpl outboundRequestHandlerService,
+            RedisCacheMgr redisCacheMgr) {
         this.accessTokenValidator = accessTokenValidator;
         this.userProfileServiceImpl = userProfileServiceImpl;
         this.accessSettingRuleCacheMgr = accessSettingRuleCacheMgr;
         this.contentService = contentService;
-        this.outboundRequestHandlerService = outboundRequestHandlerService1;
+        this.outboundRequestHandlerService = outboundRequestHandlerService;
+        this.redisCacheMgr = redisCacheMgr;
     }
 
     /**

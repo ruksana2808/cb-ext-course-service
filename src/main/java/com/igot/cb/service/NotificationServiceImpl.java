@@ -21,7 +21,6 @@ import org.igot.common.ApiResponse;
 import org.igot.common.auth.AccessTokenValidator;
 import org.igot.common.cassandra.CassandraOperation;
 import org.igot.common.service.OutboundRequestHandlerServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -36,20 +35,23 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class NotificationServiceImpl implements NotificationService {
-    @Autowired
     private AccessTokenValidator accessTokenValidator;
-
-    @Autowired
     private CassandraOperation cassandraOperation;
-
-    @Autowired
     private OutboundRequestHandlerServiceImpl outboundRequestHandlerService;
-
-    @Autowired
     private CbExtServerProperties props;
-
-    @Autowired
     private ObjectMapper objectMapper;
+
+    public NotificationServiceImpl(AccessTokenValidator accessTokenValidator,
+                                   CassandraOperation cassandraOperation,
+                                   OutboundRequestHandlerServiceImpl outboundRequestHandlerService,
+                                   CbExtServerProperties props,
+                                   ObjectMapper objectMapper) {
+        this.accessTokenValidator = accessTokenValidator;
+        this.cassandraOperation = cassandraOperation;
+        this.outboundRequestHandlerService = outboundRequestHandlerService;
+        this.props = props;
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public ApiResponse notifyAssignmentUploaded(Map<String, Object> requestData, String authToken) {

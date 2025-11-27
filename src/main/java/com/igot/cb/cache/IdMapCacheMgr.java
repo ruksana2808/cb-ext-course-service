@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.igot.common.PropertiesCache;
 import org.igot.common.service.OutboundRequestHandlerServiceImpl;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
@@ -12,7 +13,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.igot.cb.model.CachedIdMap;
 import com.igot.cb.util.Constants;
-import com.igot.cb.util.PropertiesCache;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class IdMapCacheMgr {
     private final OutboundRequestHandlerServiceImpl outboundRequestHandlerService;
-    private final PropertiesCache propertiesCache = PropertiesCache.getInstance();
+    private final PropertiesCache propertiesCache;
     private Map<String, CachedIdMap> cacheMap = new ConcurrentHashMap<>();
     private long defaultExpiryTime = 3600000; // 1 hour in milliseconds
 
@@ -33,8 +33,9 @@ public class IdMapCacheMgr {
      *
      * @param outboundRequestHandlerService Service to handle outbound requests.
      */
-    public IdMapCacheMgr(OutboundRequestHandlerServiceImpl outboundRequestHandlerService) {
+    public IdMapCacheMgr(OutboundRequestHandlerServiceImpl outboundRequestHandlerService, PropertiesCache propertiesCache) {
         this.outboundRequestHandlerService = outboundRequestHandlerService;
+        this.propertiesCache = propertiesCache;
     }
 
     /**

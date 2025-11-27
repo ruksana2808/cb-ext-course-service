@@ -236,7 +236,7 @@ public class CbPlanServiceImplFullTest {
         SearchCriteria crit = new SearchCriteria();
         when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any())).thenReturn("u1");
         when(esUtilService.searchDocuments(anyString(), any(), anyString())).thenThrow(new RuntimeException("boom"));
-        assertThrows(RuntimeException.class, () -> cbPlanService.searchCbPlan(crit, "org", "token"));
+        assertThrows(RuntimeException.class, () -> cbPlanService.searchCbPlan(crit, "token"));
     }
 
     @Test
@@ -447,11 +447,9 @@ public class CbPlanServiceImplFullTest {
         incomingRequest.put(Constants.END_DATE_REQUEST, "2025-12-12");
         incomingRequest.put(Constants.CONTEXT_DATA_REQUEST, Map.of("key", "value"));
 
-        Map<String, Object> existingCbPlan = new HashMap<>();
-
         Map<String, Object> result = ReflectionTestUtils.invokeMethod(
                 cbPlanService, "prepareCbPlanForUpdate",
-                incomingRequest, existingCbPlan, "user123");
+                incomingRequest, "user123");
 
         assertNotNull(result);
         assertEquals("user123", result.get(Constants.UPDATED_BY));
@@ -536,7 +534,7 @@ public class CbPlanServiceImplFullTest {
         when(contentService.enrichContentInfoForCBPlan(List.of("content1")))
                 .thenReturn(List.of(Map.of("id", "content1", "name", "Content One")));
 
-        ApiResponse response = cbPlanService.searchCbPlan(criteria, "org1", "token123");
+        ApiResponse response = cbPlanService.searchCbPlan(criteria, "token123");
 
         assertNotNull(response);
         assertEquals(Constants.SUCCESS, response.getParams().getStatus());

@@ -372,22 +372,6 @@ public class AccessSettingMigrationServiceImpl {
         Map<String, Object> contextData = new HashMap<>();
         contextData.put(Constants.ACCESS_CONTROL, accessControl);
         
-
-        // We do have accessControlMap, let's create accessControlIdMap
-        /*Map<String, Object> accessControlIdMap = new HashMap<>();
-        boolean isSuccess = updateContextDataWithIdMap(cbPlanId, accessControl, accessControlIdMap);
-
-        if (!isSuccess) {
-            log.error("Failed to update context data with ID map for cbPlanId: {}", cbPlanId);
-            return "";
-        }
-        if (((List<Map<String, Object>>) accessControl
-                .get(Constants.USER_GROUPS))
-                .size() != ((List<Map<String, Object>>) accessControlIdMap.get(Constants.USER_GROUPS)).size()) {
-            log.error("User groups are missing in access control id map for cbPlanId: {}", cbPlanId);
-            return "";
-        }
-        contextData.put(Constants.ACCESS_CONTROL_ID, accessControlIdMap);*/
         return objectMapper.writeValueAsString(contextData);
     }
 

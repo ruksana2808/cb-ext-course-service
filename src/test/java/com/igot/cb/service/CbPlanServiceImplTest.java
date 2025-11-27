@@ -257,7 +257,7 @@ class CbPlanServiceImplTest {
         SearchCriteria criteria = new SearchCriteria();
         when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any())).thenReturn("");
 
-        ApiResponse response = cbPlanService.searchCbPlan(criteria, "orgId", "token");
+        ApiResponse response = cbPlanService.searchCbPlan(criteria, "token");
 
         assertNotNull(response);
     }
@@ -289,7 +289,7 @@ class CbPlanServiceImplTest {
         }).when(userUtilityService).readUserProfileFromDB(any(), anyList());
 
         try {
-        ApiResponse response = cbPlanService.searchCbPlan(criteria, "orgId", "token");
+        ApiResponse response = cbPlanService.searchCbPlan(criteria, "token");
         assertNotNull(response);
         assertEquals(Constants.SUCCESS, response.getParams().getStatus());
         } catch (Exception e) {
@@ -464,17 +464,6 @@ class CbPlanServiceImplTest {
 
         assertNotNull(result);
         assertEquals(2, result.size());
-    }
-
-    @Test
-    void testArchiveCustomOrgLookup() {
-        Map<String, Object> updateResp = new HashMap<>();
-        updateResp.put(Constants.RESPONSE, Constants.SUCCESS);
-        when(cassandraOperation.updateRecord(anyString(), anyString(), any(), any())).thenReturn(updateResp);
-
-        ApiResponse result = (ApiResponse) ReflectionTestUtils.invokeMethod(cbPlanService, "archiveCustomOrgLookup", "planId", Arrays.asList("org1"));
-
-        assertNotNull(result);
     }
 
     private Map<String, Object> createMockPlan() {
@@ -1251,7 +1240,7 @@ class CbPlanServiceImplTest {
         searchResult.setData(new ArrayList<>());
         when(esUtilService.searchDocuments(anyString(), any(), anyString())).thenReturn(searchResult);
 
-        ApiResponse response = cbPlanService.searchCbPlan(criteria, "orgId", "token");
+        ApiResponse response = cbPlanService.searchCbPlan(criteria, "token");
 
         assertNotNull(response);
         assertEquals(Constants.SUCCESS, response.getParams().getStatus());
@@ -1509,7 +1498,7 @@ class CbPlanServiceImplTest {
             .thenThrow(new RuntimeException("Test exception"));
 
         try {
-            ApiResponse response = cbPlanService.searchCbPlan(criteria, "orgId", "token");
+            ApiResponse response = cbPlanService.searchCbPlan(criteria, "token");
             fail("Expected CustomException to be thrown");
         } catch (Exception e) {
             assertTrue(e.getMessage().contains("error while processing"));
@@ -1591,7 +1580,7 @@ class CbPlanServiceImplTest {
         when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any())).thenReturn("u1");
         when(esUtilService.searchDocuments(anyString(), any(), anyString())).thenThrow(new RuntimeException("boom"));
         SearchCriteria sc = new SearchCriteria();
-        assertThrows(RuntimeException.class, () -> cbPlanService.searchCbPlan(sc, "org", "t"));
+        assertThrows(RuntimeException.class, () -> cbPlanService.searchCbPlan(sc, "t"));
     }
 
     @Test

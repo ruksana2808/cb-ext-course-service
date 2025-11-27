@@ -62,7 +62,7 @@ class CourseAccessServiceImplTest {
         courseAccessService = new CourseAccessServiceImpl(
             mockAccessTokenValidator, 
             mockUserProfileService,
-            mockAccessSettingRuleCacheMgr, contentInfoService, outboundRequestHandlerService
+            mockAccessSettingRuleCacheMgr, contentInfoService, outboundRequestHandlerService, redisCacheMgr
         );
         
         // Inject the mocked RedisCacheMgr using reflection

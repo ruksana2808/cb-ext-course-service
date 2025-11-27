@@ -1,11 +1,11 @@
 package com.igot.cb.config;
 
+import org.igot.common.PropertiesCache;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.igot.cb.util.Constants;
-import com.igot.cb.util.PropertiesCache;
 
 import lombok.extern.slf4j.Slf4j;
 import redis.clients.jedis.JedisPool;
@@ -26,8 +26,8 @@ public class RedisConfig {
      * Constructor for RedisConfig.
      * Initializes the PropertiesCache instance.
      */
-    public RedisConfig() {
-        this.propertiesCache = PropertiesCache.getInstance();
+    public RedisConfig(PropertiesCache propertiesCache) {
+        this.propertiesCache = propertiesCache;
     }
 
     /**

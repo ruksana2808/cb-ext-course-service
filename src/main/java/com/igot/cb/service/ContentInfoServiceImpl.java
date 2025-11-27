@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.igot.common.PropertiesCache;
 import org.igot.common.service.OutboundRequestHandlerServiceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -16,7 +17,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cache.RedisCacheMgr;
 import com.igot.cb.util.Constants;
-import com.igot.cb.util.PropertiesCache;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,10 +40,10 @@ public class ContentInfoServiceImpl {
      * @param redisCacheMgr                 Cache manager for Redis.
      */
     public ContentInfoServiceImpl(OutboundRequestHandlerServiceImpl outboundRequestHandlerService,
-            RedisCacheMgr redisCacheMgr) {
+            RedisCacheMgr redisCacheMgr, PropertiesCache propertiesCache) {
         this.outboundRequestHandlerService = outboundRequestHandlerService;
         this.redisCacheMgr = redisCacheMgr;
-        this.propertiesCache = PropertiesCache.getInstance();
+        this.propertiesCache = propertiesCache;
         this.mapper = new ObjectMapper();
     }
 

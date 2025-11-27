@@ -13,9 +13,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.igot.common.PropertiesCache;
 import org.igot.common.service.OutboundRequestHandlerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,6 @@ import org.springframework.core.ParameterizedTypeReference;
 
 import com.igot.cb.model.CachedIdMap;
 import com.igot.cb.util.Constants;
-import com.igot.cb.util.PropertiesCache;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -39,20 +38,19 @@ class IdMapCacheMgrTest {
     @Mock
     private OutboundRequestHandlerServiceImpl outboundRequestHandlerService;
 
+    @Mock
+    private PropertiesCache propertiesCache;
+
     @InjectMocks
     private IdMapCacheMgr idMapCacheMgr;
 
     @BeforeEach
     void setup() throws Exception {
-        // Inject mock properties
-        Properties testProps = new Properties();
-        testProps.setProperty(Constants.ID_MAP_SERVICE_URL, "http://mock-idmap/");
-        testProps.setProperty(Constants.ID_MAP_SERVICE_READ_ENDPOINT, "read/");
-
-        PropertiesCache instance = PropertiesCache.getInstance();
-        Field field = PropertiesCache.class.getDeclaredField("configProp");
-        field.setAccessible(true);
-        field.set(instance, testProps);
+        // Mock the propertiesCache to return test properties
+        when(propertiesCache.getProperty(Constants.ID_MAP_SERVICE_URL))
+                .thenReturn("http://mock-idmap/");
+        when(propertiesCache.getProperty(Constants.ID_MAP_SERVICE_READ_ENDPOINT))
+                .thenReturn("read/");
 
         // Reset internal cache map
         Field cacheMapField = IdMapCacheMgr.class.getDeclaredField("cacheMap");
