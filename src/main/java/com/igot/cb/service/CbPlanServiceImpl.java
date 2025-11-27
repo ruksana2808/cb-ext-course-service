@@ -20,6 +20,7 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.igot.common.ApiRespParam;
 import org.igot.common.ApiResponse;
+import org.igot.common.CustomException;
 import org.igot.common.auth.AccessTokenValidator;
 import org.igot.common.cassandra.CassandraOperation;
 import org.springframework.http.HttpStatus;
@@ -32,7 +33,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.igot.cb.cassandra.exceptions.CustomException;
 import com.igot.cb.elasticsearch.dto.SearchCriteria;
 import com.igot.cb.elasticsearch.dto.SearchResult;
 import com.igot.cb.elasticsearch.service.EsUtilService;
@@ -444,7 +444,6 @@ public class CbPlanServiceImpl {
         Map<String, Object> contextData = new HashMap<>();
         try {
             if (contextDataObj instanceof String) {
-                ObjectMapper mapper = new ObjectMapper();
                 contextData = mapper.readValue((String) contextDataObj, Map.class);
             } else if (contextDataObj instanceof Map) {
                 contextData = (Map<String, Object>) contextDataObj;
@@ -546,7 +545,6 @@ public class CbPlanServiceImpl {
                 response.setResponseCode(HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
-            e.printStackTrace();
             log.error("Failed to Read CB Plan for OrgId: " + userOrgId + "for CB PlanId: " + cbPlanId, e);
             response.getParams().setStatus(Constants.FAILED);
             response.getParams().setErr(e.getMessage());

@@ -8,13 +8,13 @@ import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 import org.igot.common.ApiResponse;
+import org.igot.common.CustomException;
 import org.igot.common.cassandra.CassandraOperation;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igot.cb.cassandra.exceptions.CustomException;
 import com.igot.cb.util.Constants;
 import com.igot.cb.util.PayloadValidation;
 
@@ -36,7 +36,7 @@ public class AccessSettingsServiceImpl {
     this.accessSettingMigrationService = accessSettingMigrationService;
   }
 
-  public ApiResponse upsert(Map<String, Object> userGroupDetails, String authToken) {
+  public ApiResponse upsert(Map<String, Object> userGroupDetails) {
     log.info("AccessSettingsService::create:inside");
     ApiResponse response = ApiResponse.createDefaultResponse(Constants.ACCESS_SETTINGS_CREATE_API);
     if (userGroupDetails == null || userGroupDetails.isEmpty()) {

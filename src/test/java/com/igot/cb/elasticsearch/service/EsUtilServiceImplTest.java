@@ -12,7 +12,6 @@ import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
 import co.elastic.clients.elasticsearch.core.search.TotalHits;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igot.cb.cassandra.exceptions.CustomException;
 import com.igot.cb.elasticsearch.config.EsConfig;
 import com.igot.cb.elasticsearch.dto.FacetDTO;
 import com.igot.cb.elasticsearch.dto.SearchCriteria;
@@ -20,6 +19,8 @@ import com.igot.cb.elasticsearch.dto.SearchResult;
 import com.igot.cb.util.CbExtServerProperties;
 import com.igot.cb.util.Constants;
 import com.networknt.schema.JsonSchemaFactory;
+
+import org.igot.common.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -46,9 +47,6 @@ import static org.mockito.Mockito.*;
 class EsUtilServiceImplTest {
 
     @Mock
-    private EsConfig esConfig;
-
-    @Mock
     private ElasticsearchClient elasticsearchClient;
 
     @Mock
@@ -64,7 +62,7 @@ class EsUtilServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        esUtilService = new EsUtilServiceImpl(esConfig, elasticsearchClient, cbExtServerProperties);
+        esUtilService = new EsUtilServiceImpl(elasticsearchClient, cbExtServerProperties, objectMapper);
         ReflectionTestUtils.setField(esUtilService, "objectMapper", objectMapper);
     }
 

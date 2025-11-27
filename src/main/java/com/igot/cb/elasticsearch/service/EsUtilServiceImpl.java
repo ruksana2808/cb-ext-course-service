@@ -12,8 +12,6 @@ import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igot.cb.cassandra.exceptions.CustomException;
-import com.igot.cb.elasticsearch.config.EsConfig;
 import com.igot.cb.elasticsearch.dto.FacetDTO;
 import com.igot.cb.elasticsearch.dto.SearchCriteria;
 import com.igot.cb.elasticsearch.dto.SearchResult;
@@ -22,9 +20,7 @@ import com.igot.cb.util.Constants;
 import com.networknt.schema.JsonSchemaFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.MapUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.igot.common.CustomException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -37,27 +33,23 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @SuppressWarnings({"unchecked","deprecation"}) // deprecation: legacy factory usage for ES6 compatibility; unchecked: dynamic query map casting
-public class EsUtilServiceImpl implements EsUtilService{
-    private final EsConfig esConfig;
+public class EsUtilServiceImpl implements EsUtilService {
     private final ElasticsearchClient elasticsearchClient;
     private final CbExtServerProperties cbExtServerProperties;
-    private final Logger logger = LogManager.getLogger(getClass());
+    private ObjectMapper objectMapper;
 
     private static final Map<String, Map<String, Object>> schemaCache = new ConcurrentHashMap<>();
 
-    public EsUtilServiceImpl(EsConfig esConfig, ElasticsearchClient elasticsearchClient, CbExtServerProperties cbExtServerProperties) {
+    public EsUtilServiceImpl(ElasticsearchClient elasticsearchClient, CbExtServerProperties cbExtServerProperties, ObjectMapper objectMapper) {
         this.cbExtServerProperties = cbExtServerProperties;
-        this.esConfig = esConfig;
         this.elasticsearchClient = elasticsearchClient;
+        this.objectMapper = objectMapper;
     }
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Override
     public String addDocument(
             String esIndexName, String type, String id, Map<String, Object> document, String JsonFilePath) {
-        logger.info("EsUtilServiceImpl :: addDocument");
+        log.info("EsUtilServiceImpl :: addDocument");
         try {
             JsonSchemaFactory schemaFactory = JsonSchemaFactory.getInstance();
             InputStream schemaStream = schemaFactory.getClass().getResourceAsStream(JsonFilePath);
@@ -81,7 +73,7 @@ public class EsUtilServiceImpl implements EsUtilService{
             IndexResponse response = elasticsearchClient.index(indexRequest);
             return "Successfully indexed document with id: " + response.result();
         } catch (Exception e) {
-            logger.error("Issue while Indexing to es: {}", e.getMessage());
+            log.error("Issue while Indexing to es: {}", e.getMessage());
             return null;
         }
     }

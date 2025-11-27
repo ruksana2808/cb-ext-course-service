@@ -5,12 +5,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.common.ServerProperties;
 import com.igot.cb.util.Constants;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.igot.common.service.OutboundRequestHandlerServiceImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -19,30 +19,32 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Component
+@Slf4j
 public class VideoOnDemandKafkaConsumer {
-    private static final Logger logger = LoggerFactory.getLogger(VideoOnDemandKafkaConsumer.class);
-
-    @Autowired
     private ObjectMapper mapper;
-
-    @Autowired
     private ServerProperties serverProperties;
-
-    @Autowired
     private OutboundRequestHandlerServiceImpl outboundRequestHandlerService;
+
+    public VideoOnDemandKafkaConsumer(ServerProperties serverProperties,
+                                      OutboundRequestHandlerServiceImpl outboundRequestHandlerService,
+                                      ObjectMapper mapper) {
+        this.serverProperties = serverProperties;
+        this.outboundRequestHandlerService = outboundRequestHandlerService;
+        this.mapper = mapper;
+    }
 
     @KafkaListener(topics = "${spring.kafka.content.metadata.update.topic.name}", groupId = "${spring.kafka.content.metadata.update.consumer.group.id}")
     public void contentMetadataUpdateConsumerForVOD(ConsumerRecord<String, String> data) {
-        logger.debug("Processing Kafka message from topic: {}", data.topic());
+        log.debug("Processing Kafka message from topic: {}", data.topic());
 
         if (StringUtils.isBlank(data.value())) {
-            logger.warn("Received empty message from Kafka topic: {}", data.topic());
+            log.warn("Received empty message from Kafka topic: {}", data.topic());
             return;
         }
 
         CompletableFuture.runAsync(() -> processMetadataUpdate(data.value()))
                 .exceptionally(ex -> {
-                    logger.error("Failed to process metadata update asynchronously for topic: {}", data.topic(), ex);
+                    log.error("Failed to process metadata update asynchronously for topic: {}", data.topic(), ex);
                     return null;
                 });
     }
@@ -53,7 +55,7 @@ public class VideoOnDemandKafkaConsumer {
             });
 
             if (!isValidRequest(data)) {
-                logger.warn("Invalid request data: missing identifier or streaming URL");
+                log.warn("Invalid request data: missing identifier or streaming URL");
                 return;
             }
 
@@ -63,9 +65,9 @@ public class VideoOnDemandKafkaConsumer {
             updateContentMetadata(identifier, streamingUrl);
 
         } catch (JsonProcessingException e) {
-            logger.error("Failed to parse Kafka message: {}", messageValue, e);
+            log.error("Failed to parse Kafka message: {}", messageValue, e);
         } catch (Exception e) {
-            logger.error("Unexpected error processing metadata update for message: {}", messageValue, e);
+            log.error("Unexpected error processing metadata update for message: {}", messageValue, e);
         }
     }
 
@@ -81,7 +83,7 @@ public class VideoOnDemandKafkaConsumer {
     }
 
     private void updateContentMetadata(String identifier, String streamingUrl) {
-        logger.debug("Updating content metadata for identifier: {}", identifier);
+        log.debug("Updating content metadata for identifier: {}", identifier);
 
         try {
             String url = buildUpdateUrl(identifier);
@@ -93,7 +95,7 @@ public class VideoOnDemandKafkaConsumer {
             handleUpdateResponse(identifier, response);
 
         } catch (Exception e) {
-            logger.error("Failed to update content metadata for identifier: {}", identifier, e);
+            log.error("Failed to update content metadata for identifier: {}", identifier, e);
         }
     }
 
@@ -129,16 +131,16 @@ public class VideoOnDemandKafkaConsumer {
 
     private void handleUpdateResponse(String identifier, Map<String, Object> response) {
         if (response == null || response.isEmpty()) {
-            logger.warn("Received empty response for identifier: {}", identifier);
+            log.warn("Received empty response for identifier: {}", identifier);
             return;
         }
 
         String responseCode = (String) response.get(Constants.RESPONSE_CODE);
 
         if (Constants.OK.equalsIgnoreCase(responseCode)) {
-            logger.info("Successfully updated metadata for identifier: {}", identifier);
+            log.info("Successfully updated metadata for identifier: {}", identifier);
         } else {
-            logger.warn("Failed to update metadata for identifier: {}, response code: {}", identifier, responseCode);
+            log.warn("Failed to update metadata for identifier: {}, response code: {}", identifier, responseCode);
         }
     }
 }

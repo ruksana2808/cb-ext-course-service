@@ -1,9 +1,9 @@
 package com.igot.cb.service;
 
-import com.igot.cb.cassandra.exceptions.CustomException;
 import com.igot.cb.util.Constants;
 
 import org.igot.common.ApiResponse;
+import org.igot.common.CustomException;
 import org.igot.common.auth.AccessTokenValidator;
 import org.igot.common.cassandra.CassandraOperation;
 import org.junit.jupiter.api.BeforeEach;

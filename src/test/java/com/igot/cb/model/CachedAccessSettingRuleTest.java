@@ -2,7 +2,7 @@ package com.igot.cb.model;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-
+import org.igot.common.CustomException;
 import org.junit.jupiter.api.Test;
 
 class CachedAccessSettingRuleTest {
@@ -54,7 +54,7 @@ class CachedAccessSettingRuleTest {
     @Test
     void testJsonConstructor_invalidJson_throwsException() {
         String badJson = "{ invalid json }";
-        Exception ex = assertThrows(RuntimeException.class, () -> new CachedAccessSettingRule(badJson));
+        Exception ex = assertThrows(CustomException.class, () -> new CachedAccessSettingRule(badJson));
         assertTrue(ex.getMessage().contains("Failed to parse access setting rule"));
     }
 
@@ -71,14 +71,14 @@ class CachedAccessSettingRuleTest {
     @Test
     void testFieldConstructor_invalidContextData_throwsException() {
         String invalidJson = "{ unquoted: 'value' }";
-        Exception ex = assertThrows(RuntimeException.class,
+        Exception ex = assertThrows(CustomException.class,
                 () -> new CachedAccessSettingRule("id", "type", invalidJson, false));
         assertTrue(ex.getMessage().contains("Failed to parse context data"));
     }
 
     @Test
     void testFieldConstructor_emptyContextData_throwsException() {
-        Exception ex = assertThrows(RuntimeException.class,
+        Exception ex = assertThrows(CustomException.class,
                 () -> new CachedAccessSettingRule("id", "type", "", false));
         assertTrue(ex.getMessage().contains("Invalid context data"));
     }

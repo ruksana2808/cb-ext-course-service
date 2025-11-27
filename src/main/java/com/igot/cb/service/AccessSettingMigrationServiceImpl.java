@@ -146,7 +146,7 @@ public class AccessSettingMigrationServiceImpl {
                 cbPlanV2Map.put(Constants.UPDATED_AT, (Instant) cbPlanMap.get(Constants.UPDATED_AT));
                 cbPlanV2Map.put(Constants.UPDATED_BY, (String) cbPlanMap.get(Constants.UPDATED_BY));
 
-                String contextData = buildContextData(cbPlanId, orgId, assignmentType, assignmentTypeInfo);
+                String contextData = buildContextData(orgId, assignmentType, assignmentTypeInfo);
                 if (!StringUtils.hasLength(contextData)) {
                     skipped.incrementAndGet();
                     errors.add("planId=" + cbPlanId + ", error = Failed to build context data");
@@ -334,7 +334,7 @@ public class AccessSettingMigrationServiceImpl {
         return bitSet;
     }
 
-    private String buildContextData(String cbPlanId, String orgId, String assignmentType, List<String> assignmentTypeInfo)
+    private String buildContextData(String orgId, String assignmentType, List<String> assignmentTypeInfo)
             throws JsonProcessingException {
 
         // accessControl.userGroups[0]

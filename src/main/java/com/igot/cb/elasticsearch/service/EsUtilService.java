@@ -11,5 +11,5 @@ public interface EsUtilService {
 
     String updateDocument(String index, String indexType, String entityId, Map<String, Object> document, String JsonFilePath);
 
-    SearchResult searchDocuments(String esIndexName, SearchCriteria searchCriteria, String elasticCbPlanJsonPath) throws Exception;
+    SearchResult searchDocuments(String esIndexName, SearchCriteria searchCriteria, String elasticCbPlanJsonPath);
 }

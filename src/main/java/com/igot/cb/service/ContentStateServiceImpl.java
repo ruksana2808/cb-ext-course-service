@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.igot.common.ApiResponse;
+import org.igot.common.CustomException;
 import org.igot.common.auth.AccessTokenValidator;
 import org.igot.common.cassandra.CassandraOperation;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +27,6 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.igot.cb.cassandra.exceptions.CustomException;
 import com.igot.cb.util.Constants;
 import com.igot.cb.util.ProjectUtil;
 
@@ -55,7 +55,7 @@ public class ContentStateServiceImpl {
     private String requiredFieldsConfig;
 
     // Example date format: adjust to match your actual format
-    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSSZ");
+    private final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSSZ");
 
     public ApiResponse readContentState(Map<String, Object> requestBody, String authToken) {
         log.info("CourseService::readContentState:inside");
@@ -104,17 +104,7 @@ public class ContentStateServiceImpl {
                     return response;
                 }
                 // Map payload fields (camelCase) to Cassandra columns
-                Map<String, String> payloadToCassandraMap = new HashMap<String, String>() {{
-                    put(Constants.USER_ID, Constants.USER_ID_LOWER_CASE);
-                    put(Constants.CONTENT_ID, Constants.RESOURCE_ID);
-                    put(Constants.LAST_ACCESS_TIME, Constants.LAST_ACCESS_TIME_LOWER_CASE);
-                    put(Constants.LAST_COMPLETED_TIME, Constants.LAST_COMPLETED_TIME_LOWER_CASE);
-                    put(Constants.LAST_UPDATED_TIME, Constants.LAST_UPDATED_TIME_LOWER_CASE);
-                    put(Constants.PROGRESS, Constants.PROGRESS);
-                    put(Constants.PROGRESSDETAILS, Constants.PROGRESSDETAILS);
-                    put(Constants.STATUS, Constants.STATUS);
-                    put(Constants.COMPLETION_PERCENTAGE, Constants.COMPLETION_PERCENTAGE_LOWER_CASE);
-                }};
+                Map<String, String> payloadToCassandraMap = getCassandraFieldMapping();
                 fields = requestedFields.stream()
                         .map(f -> payloadToCassandraMap.getOrDefault(f, f))
                         .collect(Collectors.toList());
@@ -170,7 +160,6 @@ public class ContentStateServiceImpl {
         }
     }
 
-
     @SuppressWarnings("unchecked")
     private static Object convertInstantsToString(Object value) {
         if (value instanceof Instant) {
@@ -216,17 +205,7 @@ public class ContentStateServiceImpl {
                 Object contentsObj = requestMap.get(Constants.CONTENTS);
                 if (contentsObj instanceof List && !((List<?>) contentsObj).isEmpty()) {
                     List<Map<String, Object>> contents = (List<Map<String, Object>>) contentsObj;
-                    Map<String, String> payloadToCassandraMap = new HashMap<String, String>() {{
-                        put(Constants.USER_ID, Constants.USER_ID_LOWER_CASE);
-                        put(Constants.CONTENT_ID, Constants.RESOURCE_ID);
-                        put(Constants.LAST_ACCESS_TIME, Constants.LAST_ACCESS_TIME_LOWER_CASE);
-                        put(Constants.LAST_COMPLETED_TIME, Constants.LAST_COMPLETED_TIME_LOWER_CASE);
-                        put(Constants.LAST_UPDATED_TIME, Constants.LAST_UPDATED_TIME_LOWER_CASE);
-                        put(Constants.PROGRESS, Constants.PROGRESS);
-                        put(Constants.PROGRESSDETAILS, Constants.PROGRESSDETAILS);
-                        put(Constants.STATUS, Constants.STATUS);
-                        put(Constants.COMPLETION_PERCENTAGE, Constants.COMPLETION_PERCENTAGE_LOWER_CASE);
-                    }};
+                    Map<String, String> payloadToCassandraMap = getCassandraFieldMapping();
                     for (Map<String, Object> content : contents) {
                         Object contentId = content.get(Constants.CONTENT_ID);
                         Map<String, Object> propertyMap = new HashMap<>();
@@ -436,5 +415,19 @@ public class ContentStateServiceImpl {
         } else {
             return inputTime.after(existingTime) ? inputTime : existingTime;
         }
+    }
+
+    private Map<String, String> getCassandraFieldMapping() {
+        HashMap<String, String> payloadToCassandraMap = new HashMap<>();
+        payloadToCassandraMap.put(Constants.USER_ID, Constants.USER_ID_LOWER_CASE);
+        payloadToCassandraMap.put(Constants.CONTENT_ID, Constants.RESOURCE_ID);
+        payloadToCassandraMap.put(Constants.LAST_ACCESS_TIME, Constants.LAST_ACCESS_TIME_LOWER_CASE);
+        payloadToCassandraMap.put(Constants.LAST_COMPLETED_TIME, Constants.LAST_COMPLETED_TIME_LOWER_CASE);
+        payloadToCassandraMap.put(Constants.LAST_UPDATED_TIME, Constants.LAST_UPDATED_TIME_LOWER_CASE);
+        payloadToCassandraMap.put(Constants.PROGRESS, Constants.PROGRESS);
+        payloadToCassandraMap.put(Constants.PROGRESSDETAILS, Constants.PROGRESSDETAILS);
+        payloadToCassandraMap.put(Constants.STATUS, Constants.STATUS);
+        payloadToCassandraMap.put(Constants.COMPLETION_PERCENTAGE, Constants.COMPLETION_PERCENTAGE_LOWER_CASE);
+        return payloadToCassandraMap;
     }
 }

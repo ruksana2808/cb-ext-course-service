@@ -5,8 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cache.CbPlanCacheMgr;
 import com.igot.cb.cache.RedisCacheMgr;
-import com.igot.cb.elasticsearch.service.EsUtilService;
-import com.igot.cb.util.CbExtServerProperties;
 import com.igot.cb.util.Constants;
 import com.igot.cb.util.ProjectUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +14,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.igot.common.ApiResponse;
 import org.igot.common.auth.AccessTokenValidator;
 import org.igot.common.cassandra.CassandraOperation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -32,28 +27,16 @@ import java.util.stream.Stream;
 @Service
 @Slf4j
 public class CbPlanLearnerServiceImpl {
-
     private final AccessTokenValidator accessTokenValidator;
+    private final CassandraOperation cassandraOperation;
+    private final CbPlanCacheMgr cbPlanCacheMgr;
+    private final ContentInfoServiceImpl contentService;
+    private final RedisCacheMgr redisCacheMgr;
 
     ObjectMapper mapper = new ObjectMapper();
 
-    private Logger logger = LoggerFactory.getLogger(getClass().getName());
-
-    private final CassandraOperation cassandraOperation;
-
     @Value("${cbplan.allowed.fields.update}")
-    private String allowedFieldsConfig;
-
-    @Autowired
-    CbExtServerProperties serverProperties;
-
-    @Autowired
-    ContentInfoServiceImpl contentService;
-
-    @Autowired
-    private EsUtilService esUtilService;
-
-    private final CbPlanCacheMgr cbPlanCacheMgr;
+    private String allowedFieldsConfig;    
 
     @Value("${cb.plan.v2.index}")
     private String cpPlanIndex;
@@ -61,13 +44,13 @@ public class CbPlanLearnerServiceImpl {
     @Value("${elastic.required.field.cb.plan.json.path}")
     private String elasticCbPlanJsonPath;
 
-    @Autowired
-    private RedisCacheMgr redisCacheMgr;
-
-    public CbPlanLearnerServiceImpl(AccessTokenValidator accessTokenValidator, CassandraOperation cassandraOperation, CbPlanCacheMgr cbPlanCacheMgr) {
+    public CbPlanLearnerServiceImpl(AccessTokenValidator accessTokenValidator, CassandraOperation cassandraOperation,
+            CbPlanCacheMgr cbPlanCacheMgr, ContentInfoServiceImpl contentService, RedisCacheMgr redisCacheMgr) {
         this.accessTokenValidator = accessTokenValidator;
         this.cassandraOperation = cassandraOperation;
         this.cbPlanCacheMgr = cbPlanCacheMgr;
+        this.contentService = contentService;
+        this.redisCacheMgr = redisCacheMgr;
     }
 
     public ApiResponse getCBPlanListForUser(String userOrgId, String authTokenOrUserId, boolean isPrivate) {
@@ -83,7 +66,7 @@ public class CbPlanLearnerServiceImpl {
             if (StringUtils.isBlank(userId)) {
                 return response;
             }
-            logger.info("UserId of the User : {}, User org ID : {}", userId, userOrgId);
+            log.info("UserId of the User : {}, User org ID : {}", userId, userOrgId);
 
             // Fetch User Profile
             Map<String, String> userProfile = new HashMap<>();
@@ -107,14 +90,14 @@ public class CbPlanLearnerServiceImpl {
             if (StringUtils.isNotBlank(cachedPlansJson)) {
                 if (cachedPlansJson.equals("\"\"") || cachedPlansJson.equals("")) {
                     // Means we previously stored an explicit empty string
-                    logger.info("Redis indicates no active CB plans for userId: {}", userId);
+                    log.info("Redis indicates no active CB plans for userId: {}", userId);
                     response.getResult().put(Constants.COUNT, 0);
                     response.getResult().put(Constants.CONTENT, Collections.emptyList());
                     return response;
                 }
                 List<String> cachedPlanIds = mapper.readValue(cachedPlansJson, new TypeReference<List<String>>() {});
                 if (CollectionUtils.isNotEmpty(cachedPlanIds)) {
-                    logger.info("Cache hit for userId: {}, Found {} plan IDs in Redis", userId, cachedPlanIds.size());
+                    log.info("Cache hit for userId: {}, Found {} plan IDs in Redis", userId, cachedPlanIds.size());
                     // Fetch plan details in batches of 5
                     activeCbPlans = cbPlanCacheMgr.getCbPlansByPlanIdsInBatch(cachedPlanIds);
                 }
@@ -122,7 +105,7 @@ public class CbPlanLearnerServiceImpl {
 
             //Step 2: If Redis was empty or fetch returned nothing, get from cache manager
             if (CollectionUtils.isEmpty(activeCbPlans)) {
-                logger.info("Cache miss or no plans found in Redis, fetching fresh plans for orgId: {}", userOrgId);
+                log.info("Cache miss or no plans found in Redis, fetching fresh plans for orgId: {}", userOrgId);
                 activeCbPlans = cbPlanCacheMgr.getCbPlanForAllAndOrgId(userOrgId, isCacheEnabled);
             }
 
@@ -138,12 +121,12 @@ public class CbPlanLearnerServiceImpl {
             processActiveCbPlans(activeCbPlans, userOrgId, userId, userProfile, isCacheEnabled, resultMap);
 
             //Step 5: Prepare response
-            logger.info("Number of CB Plans available for user {} is {}", userId, resultMap.size());
+            log.info("Number of CB Plans available for user {} is {}", userId, resultMap.size());
             response.getResult().put(Constants.COUNT, resultMap.size());
             response.getResult().put(Constants.CONTENT, resultMap);
 
         } catch (Exception e) {
-            logger.error("Failed to lookup for user cb plan details. Exception: {}", e.getMessage(), e);
+            log.error("Failed to lookup for user cb plan details. Exception: {}", e.getMessage(), e);
             response.getParams().setStatus(Constants.FAILED);
             response.getParams().setErr(e.getMessage());
             response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -297,7 +280,7 @@ public class CbPlanLearnerServiceImpl {
                     courseDetailsMap.put(courseId, contentDetails);
                 }
             } else {
-                logger.error("Failed to read course details for Id: {}", courseId);
+                log.error("Failed to read course details for Id: {}", courseId);
             }
 
             if (MapUtils.isNotEmpty(contentDetails)) {
@@ -318,7 +301,7 @@ public class CbPlanLearnerServiceImpl {
             String json = (String) contextDataObj;
             return mapper.readValue(json, new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
-            logger.warn("Failed to parse contextData: {}", contextDataObj, e);
+            log.warn("Failed to parse contextData: {}", contextDataObj, e);
             return Collections.emptyMap();
         }
     }
@@ -545,7 +528,7 @@ public class CbPlanLearnerServiceImpl {
                 return response;
             }
 
-            logger.info("getCBPlanCourseListForUser :: UserId of the User : {}", userId);
+            log.info("getCBPlanCourseListForUser :: UserId of the User : {}", userId);
             Map<String, String> courseMap = new HashMap<>();
             String redisKey = "cbplan:userlookup:" + userId + ":course";
             String cachedData = redisCacheMgr.getFromCache(redisKey);
@@ -555,7 +538,7 @@ public class CbPlanLearnerServiceImpl {
                     courseMap = mapper.readValue(cachedData, new TypeReference<Map<String, String>>() {
                     });
                 } catch (Exception e) {
-                    logger.error("Failed to parse cached course map for userId: {}. Exception: {}", userId, e.getMessage(), e);
+                    log.error("Failed to parse cached course map for userId: {}. Exception: {}", userId, e.getMessage(), e);
                 }
             } else {
                 getCBPlanListForUser(userOrgId, userId, true);
@@ -565,7 +548,7 @@ public class CbPlanLearnerServiceImpl {
                         courseMap = mapper.readValue(cachedData, new TypeReference<Map<String, String>>() {
                         });
                     } catch (Exception e) {
-                        logger.error("Failed to parse cached course map for userId: {}. Exception: {}", userId, e.getMessage(), e);
+                        log.error("Failed to parse cached course map for userId: {}. Exception: {}", userId, e.getMessage(), e);
                     }
                 }
             }
@@ -573,7 +556,7 @@ public class CbPlanLearnerServiceImpl {
             response.getParams().setStatus(Constants.SUCCESS);
             response.setResponseCode(HttpStatus.OK);
         } catch (Exception e) {
-            logger.error("Failed to lookup for user cb plan details. Exception: " + e.getMessage(), e);
+            log.error("Failed to lookup for user cb plan details. Exception: " + e.getMessage(), e);
             response.getParams().setStatus(Constants.FAILED);
             response.getParams().setErr(e.getMessage());
             response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);

@@ -2,6 +2,8 @@ package com.igot.cb.model;
 
 import java.util.Map;
 
+import org.igot.common.CustomException;
+import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -31,7 +33,7 @@ public class CachedAccessSettingRule {
             this.isArchived = (Boolean) ruleData.getOrDefault("isArchived", false);
             this.cachedTimeMillis = System.currentTimeMillis();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to parse access setting rule: " + e.getMessage(), e);
+            throw new CustomException("PARSE_ERROR", "Failed to parse access setting rule: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -45,10 +47,10 @@ public class CachedAccessSettingRule {
                         new TypeReference<Map<String, Object>>() {
                         });
             } catch (Exception e) {
-                throw new RuntimeException("Failed to parse context data: " + e.getMessage(), e);
+                throw new CustomException("PARSE_ERROR", "Failed to parse context data: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } else {
-            throw new RuntimeException("Invalid context data: " + contextDataStr + ", for contextId: " + contextId);
+            throw new CustomException("INVALID_DATA", "Invalid context data: " + contextDataStr + ", for contextId: " + contextId, HttpStatus.INTERNAL_SERVER_ERROR);
         }
         this.isArchived = isArchived;
         this.cachedTimeMillis = System.currentTimeMillis();
