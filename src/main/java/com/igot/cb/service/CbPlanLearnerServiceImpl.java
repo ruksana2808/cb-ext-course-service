@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cache.CbPlanCacheMgr;
 import com.igot.cb.cache.RedisCacheMgr;
 import com.igot.cb.elasticsearch.service.EsUtilService;
-import com.igot.cb.user.UserUtilityService;
 import com.igot.cb.util.CbExtServerProperties;
 import com.igot.cb.util.Constants;
 import com.igot.cb.util.ProjectUtil;
@@ -47,10 +46,6 @@ public class CbPlanLearnerServiceImpl {
 
     @Autowired
     CbExtServerProperties serverProperties;
-
-
-    @Autowired
-    UserUtilityService userUtilityService;
 
     @Autowired
     ContentInfoServiceImpl contentService;

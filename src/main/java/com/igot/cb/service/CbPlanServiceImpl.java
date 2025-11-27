@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.igot.cb.user.UserUtilityService;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -23,7 +22,6 @@ import org.igot.common.ApiRespParam;
 import org.igot.common.ApiResponse;
 import org.igot.common.auth.AccessTokenValidator;
 import org.igot.common.cassandra.CassandraOperation;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -124,18 +122,18 @@ public class CbPlanServiceImpl {
                     response.getResult().put(Constants.STATUS, Constants.CREATED);
                 } else {
                     response.getParams().setStatus(Constants.FAILED);
-                    response.getParams().setErr("Failed to Create CB Plan for OrgId: " + userOrgId + " message: "
+                    response.getParams().setErr(Constants.CB_PLAN_FAILED_TO_CREATE + userOrgId + " message: "
                             + resp.getParams().getErr());
                     response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
                 }
             } catch (JsonProcessingException e) {
-                log.error("Failed to Create CB Plan for OrgId: " + userOrgId, e);
+                log.error(Constants.CB_PLAN_FAILED_TO_CREATE + userOrgId, e);
                 response.getParams().setStatus(Constants.FAILED);
                 response.getParams().setErr(e.getMessage());
                 response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } catch (Exception e) {
-            log.error("Failed to Create CB Plan for OrgId: " + userOrgId, e);
+            log.error(Constants.CB_PLAN_FAILED_TO_CREATE + userOrgId, e);
             response.getParams().setStatus(Constants.FAILED);
             response.getParams().setErr(e.getMessage());
             response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -165,7 +163,7 @@ public class CbPlanServiceImpl {
             Map<String, Object> existingCbPlan = cbPlanMapInfo.get(0);
             if (MapUtils.isEmpty(existingCbPlan)) {
                 response.getParams().setStatus(Constants.FAILED);
-                response.getParams().setErr("cbPlan is not found for id: " + cbPlanId);
+                response.getParams().setErr(Constants.CB_PLAN_NOT_FOUND + cbPlanId);
                 response.setResponseCode(HttpStatus.BAD_REQUEST);
                 return response;
             }
@@ -216,7 +214,7 @@ public class CbPlanServiceImpl {
                     response.getResult().put(Constants.STATUS, Constants.UPDATED);
                 } else {
                     response.getParams().setStatus(Constants.FAILED);
-                    response.getParams().setErr("cbPlan is not found for id: " + cbPlanId);
+                    response.getParams().setErr(Constants.CB_PLAN_NOT_FOUND + cbPlanId);
                     response.setResponseCode(HttpStatus.BAD_REQUEST);
                 }
             }
@@ -256,7 +254,7 @@ public class CbPlanServiceImpl {
             Map<String, Object> existingCbPlan = cbPlanMapInfo.get(0);
             if (MapUtils.isEmpty(existingCbPlan)) {
                 response.getParams().setStatus(Constants.FAILED);
-                response.getParams().setErr("cbPlan is not found for id: " + cbPlanId);
+                response.getParams().setErr(Constants.CB_PLAN_NOT_FOUND + cbPlanId);
                 response.setResponseCode(HttpStatus.BAD_REQUEST);
                 return response;
             }
@@ -392,7 +390,7 @@ public class CbPlanServiceImpl {
             } else {
                 response.getParams().setStatus(Constants.FAILED);
                 response.getParams()
-                        .setErr((String) resp.get(Constants.ERROR_MESSAGE) + "for cbPlanId: " + cbPlanId);
+                        .setErr((String) resp.get(Constants.ERROR_MESSAGE) + Constants.FOR_PLAN_ID + cbPlanId);
                 response.setResponseCode(HttpStatus.BAD_REQUEST);
             }
 
@@ -769,7 +767,7 @@ public class CbPlanServiceImpl {
                 } else {
                     response.getParams().setStatus(Constants.FAILED);
                     response.getParams()
-                            .setErr((String) resp.get(Constants.ERROR_MESSAGE) + "for cbPlanId: " + cbPlanId);
+                            .setErr((String) resp.get(Constants.ERROR_MESSAGE) + Constants.FOR_PLAN_ID + cbPlanId);
                     response.setResponseCode(HttpStatus.BAD_REQUEST);
                 }
             } else {
@@ -1090,7 +1088,7 @@ public class CbPlanServiceImpl {
             } else {
                 response.getParams().setStatus(Constants.FAILED);
                 response.getParams()
-                        .setErr((String) resp.get(Constants.ERROR_MESSAGE) + "for cbPlanId: "
+                        .setErr((String) resp.get(Constants.ERROR_MESSAGE) + Constants.FOR_PLAN_ID
                                 + existingCbPlan.get(Constants.PLAN_ID));
                 response.setResponseCode(HttpStatus.BAD_REQUEST);
             }

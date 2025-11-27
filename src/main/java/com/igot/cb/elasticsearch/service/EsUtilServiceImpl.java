@@ -437,6 +437,8 @@ public class EsUtilServiceImpl implements EsUtilService{
                                         case Constants.SEARCH_OPERATION_LESS_THAN:
                                             rangeQuery.lt(JsonData.of(rangeValue));
                                             break;
+                                        default:
+                                            throw new IllegalArgumentException(Constants.UNSUPPORTED_RANGE + rangeValue);
                                     }
                                 });
                                 rangeOrNullQuery.should(rangeQuery.build()._toQuery());

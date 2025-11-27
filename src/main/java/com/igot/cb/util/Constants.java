@@ -112,7 +112,6 @@ public class Constants {
     public static final String COMMENT = "comment";
     public static final String ALL = "All";
     public static final String END_DATE_REQUEST = "endDate";
-    public static String CommunityId = "communityId";
     public static final String ALREADY_JOINED_COMMUNITY = "This user is already joined this community";
     public static final String API_COMMUNITY_JOIN = "api.community.join";
     public static final String API_COMMUNITY_LIST_USER = "api.community.list.of.joined";
@@ -189,7 +188,7 @@ public class Constants {
     public static final String REPORTED = "reported";
     public static final String COMMUNITY_REPORT_FAILED = "Failed to report discussion";
     public static final String REPORTED_BY = "reportedBy";
-    public static final String _DOC = "_doc";
+    public static final String INDEX_DOC_TYPE = "_doc";
     public static final String DISCUSSION_COMMUNITY_KEY = "discussionCommunities";
     public static final String COMMUNITY_UPLOAD_FILE = "api.community.uploadFile";
     public static final String COMMUNITY_FILE_EMPTY = "File is empty";
@@ -360,7 +359,6 @@ public class Constants {
     public static final String CB_RETIRE = "RETIRE";
     public static final String CB_PUBLISHED_AT = "publishedat";
     public static final String API_CB_PLAN_READ_BY_ID = "api.cb.plan.v2.read.byId";
-    public static final List<String> DECRYPTED_FIELDS = Arrays.asList("phone", "email");
     public static final String FIRSTNAME = "firstName";
     public static final String CREATED_BY_NAME = "createdByName";
     public static final String COMPETENCIES_V5 = "competencies_v5";
@@ -463,14 +461,17 @@ public class Constants {
     public static final String BP_ASSIGNMENT_UPLOAD = "BP_ASSIGNMENT_UPLOAD";
     public static final String BP_ASSIGNMENT_EVALUATE = "BP_ASSIGNMENT_EVALUATE";
     public static final String BP_ASSIGNMENT_SUBMIT = "BP_ASSIGNMENT_SUBMIT";
-    public static final String HTMLTemplate = "HTMLTemplate";
+    public static final String HTML_TEMPLATE = "HTMLTemplate";
 
     public static final String ACCESS_SETTINGS_ENABLED ="accessSettingsEnabled";
     public static final String PROFILE_DETAILS_LOWERCASE = "profiledetails";
     public static final String UNDERSCORE = "_";
     public static final String CONTEXT_ID_KEY = "contextId";
     public static final String CONTEXT_ID_TYPE_KEY = "contextidtype";
-
+    public static final String ACCESS_SETTINGS_NOT_FOUND = "No access settings found for the given contentId";
+    public static final String CB_PLAN_FAILED_TO_CREATE = "Failed to Create CB Plan for OrgId: ";
+    public static final String CB_PLAN_NOT_FOUND = "CB Plan not found for the given planId: ";
+    public static final String FOR_PLAN_ID = " for PlanId: ";
     private Constants() {
     }
 }

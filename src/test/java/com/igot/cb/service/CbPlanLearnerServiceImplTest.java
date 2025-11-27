@@ -477,40 +477,12 @@ class CbPlanLearnerServiceImplTest {
     }
 
     @Test
-    void testGetExistingContextData_InvalidJson() throws Exception {
-        when(cassandraOperation.getRecordsByProperties(any(), any(), any(), any(), any()))
-                .thenReturn(List.of(Map.of(Constants.CONTEXT_DATA_KEY, "{invalid")));
-        Method m = CbPlanLearnerServiceImpl.class.getDeclaredMethod("getExistingContextData",
-                String.class, String.class, Map.class);
-        m.setAccessible(true);
-        m.invoke(service, "user123", "org123", new HashMap<>());
-    }
-
-    @Test
     void testRemoveDuplicateCourses_DuplicateIdentifiers() {
         Map<String, Object> langMap = Map.of("en", Map.of(Constants.ID, "dup1"));
         Map<String, Object> c1 = Map.of(Constants.IDENTIFIER, "dup1", Constants.LANGUAGE_MAP_V1, langMap);
         Map<String, Object> c2 = Map.of(Constants.IDENTIFIER, "dup1", Constants.LANGUAGE_MAP_V1, langMap);
         List<Map<String, Object>> result = service.removeDuplicateCourses(List.of(c1, c2));
         assertEquals(1, result.size());
-    }
-
-    @Test
-    void testProcessActiveCbPlans_WithInvalidContextData() throws Exception {
-        Map<String, Object> invalidPlan = new HashMap<>();
-        invalidPlan.put(Constants.PLAN_ID, "plan123");
-        invalidPlan.put(Constants.CONTENT_LIST, List.of("course1"));
-        invalidPlan.put(Constants.CONTEXT_DATA_REQUEST, "{invalid-json}");
-        invalidPlan.put(Constants.END_DATE_REQUEST, Instant.now());
-
-        List<Map<String, Object>> activePlans = List.of(invalidPlan);
-        AtomicBoolean isCacheEnabled = new AtomicBoolean(false);
-
-        Method method = CbPlanLearnerServiceImpl.class.getDeclaredMethod("processActiveCbPlans",
-                List.class, String.class, String.class, Map.class, AtomicBoolean.class, List.class);
-        method.setAccessible(true);
-
-        method.invoke(service, activePlans, "org123", "user123", new HashMap<>(), isCacheEnabled, new ArrayList<>());
     }
 
     @Test

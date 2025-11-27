@@ -116,14 +116,14 @@ public class AccessSettingsServiceImpl {
                   HttpStatus.INTERNAL_SERVER_ERROR);
             }
           } else {
-            setFailedResponse(response, "No access settings found for the given contentId", HttpStatus.NOT_FOUND);
+            setFailedResponse(response, Constants.ACCESS_SETTINGS_NOT_FOUND, HttpStatus.NOT_FOUND);
             return response;
           }
         }
-        setFailedResponse(response, "No access settings found for the given contentId", HttpStatus.NOT_FOUND);
+        setFailedResponse(response, Constants.ACCESS_SETTINGS_NOT_FOUND, HttpStatus.NOT_FOUND);
         return response;
       }
-      setFailedResponse(response, "No access settings found for the given contentId", HttpStatus.NOT_FOUND);
+      setFailedResponse(response, Constants.ACCESS_SETTINGS_NOT_FOUND, HttpStatus.NOT_FOUND);
       return response;
     } catch (Exception e) {
       log.error("Error while reading accessRule:", e);

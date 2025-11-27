@@ -208,7 +208,7 @@ public class NotificationServiceImpl implements NotificationService {
                 }
             }
             StringWriter writer = new StringWriter();
-            velocityEngine.evaluate(context, writer, Constants.HTMLTemplate, htmlTemplate);
+            velocityEngine.evaluate(context, writer, Constants.HTML_TEMPLATE, htmlTemplate);
             replacedHTML = writer.toString();
         } catch (Exception e) {
             log.error("Unable to create template ", e);
