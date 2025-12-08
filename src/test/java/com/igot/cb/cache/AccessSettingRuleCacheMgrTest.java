@@ -37,10 +37,20 @@ class AccessSettingRuleCacheMgrTest {
     @BeforeEach
     void setup() throws Exception {
         cacheMgr = new AccessSettingRuleCacheMgr(redisCacheMgr, cassandraOperation);
-        Field ttlField = AccessSettingRuleCacheMgr.class.getDeclaredField("ttlMinutes");
-        ttlField.setAccessible(true);
-        ttlField.set(cacheMgr, 10);
-        cacheMgr.initCache();
+        try {
+            Field ttlField = AccessSettingRuleCacheMgr.class.getDeclaredField("ttlMinutes");
+            ttlField.setAccessible(true);
+            ttlField.setInt(cacheMgr, 10);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set ttlMinutes in test", e);
+        }
+        try {
+            var method = AccessSettingRuleCacheMgr.class.getDeclaredMethod("initCache");
+            method.setAccessible(true);
+            method.invoke(cacheMgr);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize cache in test", e);
+        }
 
         validJsonRule = """
         {
@@ -276,13 +286,14 @@ class AccessSettingRuleCacheMgrTest {
 
     @Test
     void testGetOrLoadAccessSettingRule_cacheHit() {
-        // Use reflection to insert an entry into the internal cache
+        // Use reflection to insert an entry into the Caffeine cache
         CachedAccessSettingRule rule = new CachedAccessSettingRule("do_123", "Course", "{}", false);
 
         try {
             Field field = AccessSettingRuleCacheMgr.class.getDeclaredField("accessSettingsCache");
             field.setAccessible(true);
-            Cache<String, CachedAccessSettingRule> cache = (Cache<String, CachedAccessSettingRule>) field.get(cacheMgr);
+            Cache<String, CachedAccessSettingRule> cache =
+                (Cache<String, CachedAccessSettingRule>) field.get(cacheMgr);
             cache.put("do_123|Course", rule);
         } catch (Exception e) {
             fail("Reflection failed: " + e.getMessage());
