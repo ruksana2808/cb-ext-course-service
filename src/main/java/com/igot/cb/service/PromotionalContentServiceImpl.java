@@ -14,7 +14,7 @@ import com.igot.cb.util.PayloadValidation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.keycloak.common.util.CollectionUtil;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -44,8 +44,8 @@ public class PromotionalContentServiceImpl implements IPromotionalContentService
     @Value("${promotional.content.read.fields}")
     private String contentReadFields;
 
-    @Value("${promotional.content.cache.ttl.seconds}")
-    private Integer promotionalContentCacheTtlSeconds;
+    @Value("${promotional.content.user.cache.ttl.seconds}")
+    private Integer promotionalContentUserCacheTtlSeconds;
 
     /**
      * Constructs the service with required dependencies.
@@ -167,7 +167,7 @@ public class PromotionalContentServiceImpl implements IPromotionalContentService
         if (StringUtils.isEmpty(userId)) {
             return response;
         }
-        String cachedCourseForUser = redisCacheMgr.getFromCache(Constants.PROMOTIONAL_CONTENT_KEY + userId, promotionalContentCacheTtlSeconds);
+        String cachedCourseForUser = redisCacheMgr.getFromCache(Constants.PROMOTIONAL_CONTENT_KEY + userId, promotionalContentUserCacheTtlSeconds);
         if (StringUtils.isNotEmpty(cachedCourseForUser)) {
             return handleAndProcessCachedPromotionalContent(cachedCourseForUser, response, userId);
         }
@@ -180,13 +180,13 @@ public class PromotionalContentServiceImpl implements IPromotionalContentService
                 try {
                     redisCacheMgr.putInCache(Constants.PROMOTIONAL_CONTENT_KEY + userId,
                             objectMapper.writeValueAsString(userCourses),
-                            promotionalContentCacheTtlSeconds);
+                            promotionalContentUserCacheTtlSeconds);
                 } catch (JsonProcessingException e) {
                     log.error("Error caching promotional content for userId: {}", userId, e);
                     response.updateErrorDetails("Fetching Promotional content failed due to an error", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
             } else {
-                redisCacheMgr.putInCache(Constants.ACCESS_KEY + userId, Constants.NO_RECORDS_FOUND, promotionalContentCacheTtlSeconds);
+                redisCacheMgr.putInCache(Constants.ACCESS_KEY + userId, Constants.NO_RECORDS_FOUND, promotionalContentUserCacheTtlSeconds);
             }
             response.getResult().put(Constants.CONTENT, userCourses);
         } else {
