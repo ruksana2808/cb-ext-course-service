@@ -51,10 +51,11 @@ public class CbPlanServiceImpl {
 
     private final AccessTokenValidator accessTokenValidator;
 
-    // Configure a dedicated ObjectMapper with JavaTimeModule so Instant and other Java 8 date/time types serialize as ISO-8601
+    // Configure a dedicated ObjectMapper with JavaTimeModule so Instant and other
+    // Java 8 date/time types serialize as ISO-8601
     private final ObjectMapper mapper = new ObjectMapper()
-        .registerModule(new JavaTimeModule())
-        .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private final CassandraOperation cassandraOperation;
 
@@ -67,7 +68,6 @@ public class CbPlanServiceImpl {
     private final EsUtilService esUtilService;
 
     private final RequestValidator requestValidator;
-
 
     public CbPlanServiceImpl(AccessTokenValidator accessTokenValidator, CassandraOperation cassandraOperation,
             CbExtServerProperties serverProperties, UserAndOrgServiceImpl userAndOrgService,
@@ -297,14 +297,16 @@ public class CbPlanServiceImpl {
                 // Need to update lookup table entries
                 updatedRequest.putAll(prepareCbPlanForRePublish(existingCbPlan, incomingRequest, userId));
                 if (updatedRequest.containsKey(Constants.CONTEXT_DATA_REQUEST)) {
-                    errors = requestValidator.validateContextData(updatedRequest, isCCA, userOrgId, rootOrgIdsInCriteria);
+                    errors = requestValidator.validateContextData(updatedRequest, isCCA, userOrgId,
+                            rootOrgIdsInCriteria);
                 }
             } else if (Constants.DRAFT.equalsIgnoreCase(existingPlanStatus)) {
                 // Need to update comment and then publish.
                 // Need to update lookup table entries
                 updatedRequest.put(Constants.STATUS, Constants.LIVE);
-                updatedRequest.put(Constants.END_DATE_REQUEST, parseEndDate(existingCbPlan.get(Constants.END_DATE_REQUEST)));
-                errors = requestValidator.validateContextData(existingCbPlan, isCCA, userOrgId, rootOrgIdsInCriteria);                
+                updatedRequest.put(Constants.END_DATE_REQUEST,
+                        parseEndDate(existingCbPlan.get(Constants.END_DATE_REQUEST)));
+                errors = requestValidator.validateContextData(existingCbPlan, isCCA, userOrgId, rootOrgIdsInCriteria);
             } else {
                 response.getParams().setStatus(Constants.FAILED);
                 response.getParams().setErr(
@@ -361,7 +363,7 @@ public class CbPlanServiceImpl {
                 Set<String> removed = new HashSet<>(existingRootOrgIdsInCriteria);
                 removed.removeAll(rootOrgIdsInCriteria);
                 if (CollectionUtils.isNotEmpty(removed)) {
-                    if (Constants.CUSTOM.equalsIgnoreCase(existingOrgScope) || 
+                    if (Constants.CUSTOM.equalsIgnoreCase(existingOrgScope) ||
                             Constants.SINGLE.equalsIgnoreCase(existingOrgScope)) {
                         ApiResponse removeResp = upsertCustomOrgLookup(String.valueOf(cbPlanId), removed, null, false);
                         if (!Constants.SUCCESS.equals(removeResp.get(Constants.RESPONSE))) {
@@ -373,20 +375,20 @@ public class CbPlanServiceImpl {
                     }
                 }
                 if (Constants.ALL.equalsIgnoreCase(existingOrgScope)) {
-                        // We had 'ALL' scope previously. So, let's check if anything is added.
-                        Set<String> newlyAdded = new HashSet<>(rootOrgIdsInCriteria);
-                        newlyAdded.removeAll(existingRootOrgIdsInCriteria);
-                        if (CollectionUtils.isNotEmpty(newlyAdded)) {
-                            //Yes, something is added. So, we need to remove the 'ALL' entry
-                            ApiResponse removeResp = upsertAllOrgLookup(String.valueOf(cbPlanId), null, false);
-                            if (!Constants.SUCCESS.equals(removeResp.get(Constants.RESPONSE))) {
-                                response.getParams().setStatus(Constants.FAILED);
-                                response.getParams().setErr(removeResp.getParams().getErr());
-                                response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
-                                return response;
-                            }
+                    // We had 'ALL' scope previously. So, let's check if anything is added.
+                    Set<String> newlyAdded = new HashSet<>(rootOrgIdsInCriteria);
+                    newlyAdded.removeAll(existingRootOrgIdsInCriteria);
+                    if (CollectionUtils.isNotEmpty(newlyAdded)) {
+                        // Yes, something is added. So, we need to remove the 'ALL' entry
+                        ApiResponse removeResp = upsertAllOrgLookup(String.valueOf(cbPlanId), null, false);
+                        if (!Constants.SUCCESS.equals(removeResp.get(Constants.RESPONSE))) {
+                            response.getParams().setStatus(Constants.FAILED);
+                            response.getParams().setErr(removeResp.getParams().getErr());
+                            response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
+                            return response;
                         }
                     }
+                }
             } else {
                 response.getParams().setStatus(Constants.FAILED);
                 response.getParams()
@@ -426,7 +428,8 @@ public class CbPlanServiceImpl {
                 }
             }
         } catch (Exception e) {
-            throw new CustomException(Constants.PARSE_ERROR, "Invalid endDate format: " + endDateObj, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new CustomException(Constants.PARSE_ERROR, "Invalid endDate format: " + endDateObj,
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return null;
     }
@@ -520,6 +523,7 @@ public class CbPlanServiceImpl {
 
     public ApiResponse readCbPlan(String cbPlanId, String userOrgId, String authUserToken) {
         ApiResponse response = ProjectUtil.createDefaultResponse(Constants.API_CB_PLAN_READ_BY_ID);
+        log.info("The user token is: {}", authUserToken);
         try {
             if (StringUtils.isEmpty(cbPlanId)) {
                 response.getParams().setStatus(Constants.FAILED);
@@ -554,8 +558,9 @@ public class CbPlanServiceImpl {
     private Map<String, Object> populateReadData(Map<String, Object> cbPlan) throws Exception {
         Map<String, Object> enrichData = new HashMap<>();
         List<String> contentTypeInfo;
-        if ((StringUtils.isNotBlank((String) cbPlan.get(Constants.DRAFT_DATA)) && !((String)cbPlan.get(Constants.DRAFT_DATA)).equals("{}")) 
-                        && Constants.LIVE.equalsIgnoreCase((String) cbPlan.get(Constants.STATUS))) {
+        if ((StringUtils.isNotBlank((String) cbPlan.get(Constants.DRAFT_DATA))
+                && !((String) cbPlan.get(Constants.DRAFT_DATA)).equals("{}"))
+                && Constants.LIVE.equalsIgnoreCase((String) cbPlan.get(Constants.STATUS))) {
             CbPlanDto cbPlanDto = mapper.readValue((String) cbPlan.get(Constants.DRAFT_DATA), CbPlanDto.class);
             enrichData.put(Constants.NAME, cbPlanDto.getName());
             contentTypeInfo = cbPlanDto.getContentList();
@@ -626,8 +631,7 @@ public class CbPlanServiceImpl {
                                 // fetch user details from DB
                                 userInfoMap = userAndOrgService.readUserProfile(
                                         strValue,
-                                        Arrays.asList(Constants.FIRSTNAME, Constants.USER_ID)
-                                );
+                                        Arrays.asList(Constants.FIRSTNAME, Constants.USER_ID));
                                 if (userInfoMap != null) {
                                     enrichedItem.put(Constants.CREATED_BY_NAME,
                                             userInfoMap.get(Constants.FIRSTNAME));
@@ -664,7 +668,6 @@ public class CbPlanServiceImpl {
         }
         return response;
     }
-
 
     private void createSuccessResponse(ApiResponse response) {
         response.setParams(new ApiRespParam());
@@ -732,10 +735,11 @@ public class CbPlanServiceImpl {
                             cbPlanId, sanitizedMap, serverProperties.getElasticCbPlanJsonPath());
                     Set<String> existingRootOrgIdsInCriteria = extractUniqueRootOrgIds(cbPlan);
                     String orgScope = (String) cbPlan.get(Constants.ORG_SCOPE);
-                    
+
                     if (Constants.SINGLE.equalsIgnoreCase(orgScope)
                             || Constants.CUSTOM.equalsIgnoreCase(orgScope)) {
-                        ApiResponse lookupResp = upsertCustomOrgLookup(cbPlanId, existingRootOrgIdsInCriteria, null, false);
+                        ApiResponse lookupResp = upsertCustomOrgLookup(cbPlanId, existingRootOrgIdsInCriteria, null,
+                                false);
                         if (!Constants.SUCCESS.equals(lookupResp.get(Constants.RESPONSE))) {
                             response.getParams().setStatus(Constants.FAILED);
                             response.getParams().setErr(lookupResp.getParams().getErr());
@@ -819,6 +823,7 @@ public class CbPlanServiceImpl {
 
     private Map<String, Object> prepareCbPlanForRePublish(Map<String, Object> existingCbPlan,
             Map<String, Object> incomingRequest, String userId) throws JsonProcessingException {
+        log.info("The user ID is: {}", userId);
         Map<String, Object> dataInDraftObject = existingCbPlan.get(Constants.DRAFT_DATA) != null
                 ? mapper.readValue((String) existingCbPlan.get(Constants.DRAFT_DATA),
                         new TypeReference<Map<String, Object>>() {
@@ -869,7 +874,8 @@ public class CbPlanServiceImpl {
         return sanitized;
     }
 
-    private ApiResponse upsertCustomOrgLookup(String cbPlanId, Set<String> orgIdList, Instant endDate, boolean isActive) {
+    private ApiResponse upsertCustomOrgLookup(String cbPlanId, Set<String> orgIdList, Instant endDate,
+            boolean isActive) {
         ApiResponse response = new ApiResponse();
         try {
             if (CollectionUtils.isEmpty(orgIdList)) {
