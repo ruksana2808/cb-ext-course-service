@@ -9,7 +9,7 @@ import org.igot.common.ApiResponse;
 import org.igot.common.auth.AccessTokenValidator;
 import org.igot.common.cassandra.CassandraOperation;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -29,19 +29,23 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class CbPlanLearnerServiceImplTest {
 
-    @Mock private AccessTokenValidator accessTokenValidator;
-    @Mock private CassandraOperation cassandraOperation;
-    @Mock private ContentInfoServiceImpl contentService;
-    @Mock private CbPlanCacheMgr cbPlanCacheMgr;
-    @Mock private RedisCacheMgr redisCacheMgr;
-
+    @Mock
+    private AccessTokenValidator accessTokenValidator;
+    @Mock
+    private CassandraOperation cassandraOperation;
+    @Mock
+    private ContentInfoServiceImpl contentService;
+    @Mock
+    private CbPlanCacheMgr cbPlanCacheMgr;
+    @Mock
+    private RedisCacheMgr redisCacheMgr;
 
     private CbPlanLearnerServiceImpl service;
 
     @BeforeEach
     void setUp() {
         service = new CbPlanLearnerServiceImpl(accessTokenValidator, cassandraOperation,
-            cbPlanCacheMgr, contentService, redisCacheMgr);
+                cbPlanCacheMgr, contentService, redisCacheMgr);
         ReflectionTestUtils.setField(service, "contentService", contentService);
         ReflectionTestUtils.setField(service, "redisCacheMgr", redisCacheMgr);
         lenient().when(cassandraOperation.getRecordsByProperties(any(), any(), any(), any(), any()))
@@ -53,19 +57,24 @@ class CbPlanLearnerServiceImplTest {
         lenient().when(redisCacheMgr.getFromCache(anyString())).thenReturn(null);
     }
 
-
     @Test
     void testGetCBPlanListForUser_Success() {
         lenient().when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any())).thenReturn("user123");
 
         Map<String, Object> userData = createUserData();
-        lenient().when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.USER), any(), any(), any()))
+        lenient()
+                .when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.USER),
+                        any(), any(), any()))
                 .thenReturn(Arrays.asList(userData));
 
-        lenient().when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.TABLE_CB_PLAN_V2_LOOKUP_BY_ALL_ORG), any(), any(), any()))
+        lenient()
+                .when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD),
+                        eq(Constants.TABLE_CB_PLAN_V2_LOOKUP_BY_ALL_ORG), any(), any(), any()))
                 .thenReturn(new ArrayList<>());
 
-        lenient().when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.TABLE_CB_PLAN_V2_LOOKUP_BY_ORG), any(), any(), any()))
+        lenient()
+                .when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD),
+                        eq(Constants.TABLE_CB_PLAN_V2_LOOKUP_BY_ORG), any(), any(), any()))
                 .thenReturn(new ArrayList<>());
 
         ApiResponse response = service.getCBPlanListForUser("org123", "token123", false);
@@ -76,7 +85,8 @@ class CbPlanLearnerServiceImplTest {
     @Test
     void testGetCBPlanListForUser_UserNotFound() {
         when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any())).thenReturn("user123");
-        when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.USER), any(), any(), any()))
+        when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.USER), any(), any(),
+                any()))
                 .thenReturn(new ArrayList<>());
 
         ApiResponse response = service.getCBPlanListForUser("org123", "token123", false);
@@ -90,7 +100,8 @@ class CbPlanLearnerServiceImplTest {
         when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any())).thenReturn("user123");
 
         Map<String, Object> userData = createUserData();
-        when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.USER), any(), any(), any()))
+        when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.USER), any(), any(),
+                any()))
                 .thenReturn(Arrays.asList(userData));
 
         // Mock Redis cache to return nothing (so CBPlan fetches from cacheMgr)
@@ -120,18 +131,22 @@ class CbPlanLearnerServiceImplTest {
         assertEquals(1, response.getResult().get(Constants.COUNT));
     }
 
-
-
     @Test
     void testGetCBPlanListForUser_PrivateMode() {
         Map<String, Object> userData = createUserData();
-        lenient().when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.USER), any(), any(), any()))
+        lenient()
+                .when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.USER),
+                        any(), any(), any()))
                 .thenReturn(Arrays.asList(userData));
 
-        lenient().when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.TABLE_CB_PLAN_V2_LOOKUP_BY_ALL_ORG), any(), any(), any()))
+        lenient()
+                .when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD),
+                        eq(Constants.TABLE_CB_PLAN_V2_LOOKUP_BY_ALL_ORG), any(), any(), any()))
                 .thenReturn(new ArrayList<>());
 
-        lenient().when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.TABLE_CB_PLAN_V2_LOOKUP_BY_ORG), any(), any(), any()))
+        lenient()
+                .when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD),
+                        eq(Constants.TABLE_CB_PLAN_V2_LOOKUP_BY_ORG), any(), any(), any()))
                 .thenReturn(new ArrayList<>());
 
         ApiResponse response = service.getCBPlanListForUser("org123", "user123", true);
@@ -151,7 +166,8 @@ class CbPlanLearnerServiceImplTest {
 
     @Test
     void testGetCBPlanListForUser_Exception() {
-        when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any())).thenThrow(new RuntimeException("Test exception"));
+        when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any()))
+                .thenThrow(new RuntimeException("Test exception"));
 
         ApiResponse response = service.getCBPlanListForUser("org123", "token123", false);
 
@@ -228,18 +244,18 @@ class CbPlanLearnerServiceImplTest {
     }
 
     @Test
-    @Disabled
     void testSetUserProfile_ValidData() throws Exception {
         Map<String, String> userProfile = new HashMap<>();
         Map<String, Object> userBasicProfile = createUserData();
 
-        Method setUserProfileMethod = CbPlanLearnerServiceImpl.class.getDeclaredMethod("setUserProfile", Map.class, Map.class);
+        Method setUserProfileMethod = CbPlanLearnerServiceImpl.class.getDeclaredMethod("setUserProfile", Map.class,
+                Map.class);
         setUserProfileMethod.setAccessible(true);
 
         setUserProfileMethod.invoke(service, userProfile, userBasicProfile);
 
         assertEquals("user123", userProfile.get(Constants.USER));
-        assertEquals("org123", userProfile.get(Constants.ROOT_ORG_ID));
+        assertEquals("org123", userProfile.get(Constants.USER_ROOT_ORG_ID));
     }
 
     @Test
@@ -247,7 +263,8 @@ class CbPlanLearnerServiceImplTest {
         Map<String, String> userProfile = new HashMap<>();
         Map<String, Object> emptyProfile = new HashMap<>();
 
-        Method setUserProfileMethod = CbPlanLearnerServiceImpl.class.getDeclaredMethod("setUserProfile", Map.class, Map.class);
+        Method setUserProfileMethod = CbPlanLearnerServiceImpl.class.getDeclaredMethod("setUserProfile", Map.class,
+                Map.class);
         setUserProfileMethod.setAccessible(true);
 
         setUserProfileMethod.invoke(service, userProfile, emptyProfile);
@@ -260,7 +277,8 @@ class CbPlanLearnerServiceImplTest {
         Map<String, Object> accessSettingMap = createAccessSettingMap();
         Map<String, String> userProfile = createUserProfile();
 
-        Method evaluateMethod = CbPlanLearnerServiceImpl.class.getDeclaredMethod("evaluateContextAccessRule", Map.class, Map.class);
+        Method evaluateMethod = CbPlanLearnerServiceImpl.class.getDeclaredMethod("evaluateContextAccessRule", Map.class,
+                Map.class);
         evaluateMethod.setAccessible(true);
 
         boolean result = (boolean) evaluateMethod.invoke(service, accessSettingMap, userProfile);
@@ -273,7 +291,8 @@ class CbPlanLearnerServiceImplTest {
         Map<String, Object> accessSettingMap = createAccessSettingMapNoAccess();
         Map<String, String> userProfile = createUserProfile();
 
-        Method evaluateMethod = CbPlanLearnerServiceImpl.class.getDeclaredMethod("evaluateContextAccessRule", Map.class, Map.class);
+        Method evaluateMethod = CbPlanLearnerServiceImpl.class.getDeclaredMethod("evaluateContextAccessRule", Map.class,
+                Map.class);
         evaluateMethod.setAccessible(true);
 
         boolean result = (boolean) evaluateMethod.invoke(service, accessSettingMap, userProfile);
@@ -283,7 +302,8 @@ class CbPlanLearnerServiceImplTest {
 
     @Test
     void testEvaluateContextAccessRule_EmptyMaps() throws Exception {
-        Method evaluateMethod = CbPlanLearnerServiceImpl.class.getDeclaredMethod("evaluateContextAccessRule", Map.class, Map.class);
+        Method evaluateMethod = CbPlanLearnerServiceImpl.class.getDeclaredMethod("evaluateContextAccessRule", Map.class,
+                Map.class);
         evaluateMethod.setAccessible(true);
 
         boolean result = (boolean) evaluateMethod.invoke(service, new HashMap<>(), new HashMap<>());
@@ -294,8 +314,9 @@ class CbPlanLearnerServiceImplTest {
     private Map<String, Object> createUserData() {
         Map<String, Object> userData = new HashMap<>();
         userData.put(Constants.ID, "user123");
-        userData.put("rootorgid", "org123");
-        userData.put("profiledetails", "{\"professionalDetails\":[{\"designation\":\"Test\",\"group\":\"TestGroup\"}],\"profileStatus\":\"VERIFIED\",\"cadreDetails\":{\"cadreName\":\"TestCadre\",\"civilServiceName\":\"TestService\",\"cadreBatch\":2020}}");
+        userData.put(Constants.ROOT_ORG_ID, "org123");
+        userData.put("profiledetails",
+                "{\"professionalDetails\":[{\"designation\":\"Test\",\"group\":\"TestGroup\"}],\"profileStatus\":\"VERIFIED\",\"cadreDetails\":{\"cadreName\":\"TestCadre\",\"civilServiceName\":\"TestService\",\"cadreBatch\":2020}}");
         return userData;
     }
 
@@ -353,10 +374,10 @@ class CbPlanLearnerServiceImplTest {
 
         return accessSettingMap;
     }
+
     @Test
     void testGetExistingContextData_WithCustomFields() throws Exception {
         Map<String, String> userProfile = new HashMap<>();
-        Map<String, Object> userBasicProfile = createUserData();
 
         // Prepare custom field TEXT type
         Map<String, Object> customFieldText = new HashMap<>();
@@ -386,18 +407,17 @@ class CbPlanLearnerServiceImplTest {
                 eq(Constants.TABLE_USER_EXTENDED_PROFILE),
                 any(),
                 any(),
-                any()
-        )).thenReturn(List.of(row));
+                any())).thenReturn(List.of(row));
 
         // Call private method via reflection
-        Method method = CbPlanLearnerServiceImpl.class.getDeclaredMethod("getExistingContextData", String.class, String.class, Map.class);
+        Method method = CbPlanLearnerServiceImpl.class.getDeclaredMethod("getExistingContextData", String.class,
+                String.class, Map.class);
         method.setAccessible(true);
         method.invoke(service, "user123", "org123", userProfile);
 
         assertEquals("CustomValue", userProfile.get("customText"));
         assertEquals("Java", userProfile.get("skill"));
     }
-
 
     @Test
     void testGetCBPlanCourseListForUser_CacheHitValidJson() throws Exception {
@@ -454,12 +474,12 @@ class CbPlanLearnerServiceImplTest {
 
         Map<String, String> userProfile = Map.of(Constants.CENTRAL_DEPUTATION_LOWER_KEY, "true");
 
-        Method method = CbPlanLearnerServiceImpl.class.getDeclaredMethod("evaluateContextAccessRule", Map.class, Map.class);
+        Method method = CbPlanLearnerServiceImpl.class.getDeclaredMethod("evaluateContextAccessRule", Map.class,
+                Map.class);
         method.setAccessible(true);
         boolean result = (boolean) method.invoke(service, accessSetting, userProfile);
         assertTrue(result);
     }
-
 
     @Test
     void testProcessActiveCbPlans_WithCacheEnabled() throws Exception {
@@ -469,8 +489,7 @@ class CbPlanLearnerServiceImplTest {
         List<Map<String, Object>> activePlans = List.of(Map.of(
                 Constants.PLAN_ID, "plan123",
                 Constants.CONTENT_LIST, List.of("course1"),
-                Constants.END_DATE_REQUEST, Instant.now()
-        ));
+                Constants.END_DATE_REQUEST, Instant.now()));
 
         Method m = CbPlanLearnerServiceImpl.class.getDeclaredMethod("processActiveCbPlans",
                 List.class, String.class, String.class, Map.class, AtomicBoolean.class, List.class);
@@ -511,7 +530,8 @@ class CbPlanLearnerServiceImplTest {
         Map<String, Object> accessSettingMap = Map.of(Constants.ACCESS_CONTROL, Map.of());
         Map<String, String> userProfile = Map.of("designation", "Test");
 
-        Method method = CbPlanLearnerServiceImpl.class.getDeclaredMethod("evaluateContextAccessRule", Map.class, Map.class);
+        Method method = CbPlanLearnerServiceImpl.class.getDeclaredMethod("evaluateContextAccessRule", Map.class,
+                Map.class);
         method.setAccessible(true);
         boolean result = (boolean) method.invoke(service, accessSettingMap, userProfile);
         assertFalse(result);
@@ -528,7 +548,8 @@ class CbPlanLearnerServiceImplTest {
     void testGetCBPlanListForUser_EmptyRedisString() {
         when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any())).thenReturn("user123");
         Map<String, Object> userData = createUserData();
-        when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.USER), any(), any(), any()))
+        when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.USER), any(), any(),
+                any()))
                 .thenReturn(List.of(userData));
         when(redisCacheMgr.getFromCache(anyString())).thenReturn("\"\"");
         ApiResponse response = service.getCBPlanListForUser("org123", "token123", false);
@@ -539,7 +560,8 @@ class CbPlanLearnerServiceImplTest {
     void testGetCBPlanListForUser_WithCachedPlans() throws Exception {
         when(accessTokenValidator.fetchUserIdFromAccessToken(anyString(), any())).thenReturn("user123");
         Map<String, Object> userData = createUserData();
-        when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.USER), any(), any(), any()))
+        when(cassandraOperation.getRecordsByProperties(eq(Constants.KEYSPACE_SUNBIRD), eq(Constants.USER), any(), any(),
+                any()))
                 .thenReturn(List.of(userData));
 
         String cachedPlansJson = new ObjectMapper().writeValueAsString(List.of("plan1"));
@@ -553,6 +575,7 @@ class CbPlanLearnerServiceImplTest {
         ApiResponse response = service.getCBPlanListForUser("org123", "token123", false);
         assertEquals(HttpStatus.OK, response.getResponseCode());
     }
+
     @Test
     void getCBPlanListForUser_success_noPlans() {
         when(accessTokenValidator.fetchUserIdFromAccessToken(any(), any())).thenReturn("user1");
@@ -567,6 +590,7 @@ class CbPlanLearnerServiceImplTest {
         assertEquals(Constants.SUCCESS, resp.getParams().getStatus());
         assertEquals(0, resp.getResult().get(Constants.COUNT));
     }
+
     @Test
     void getCBPlanListForUser_success_withPlanAndCourse() {
         when(accessTokenValidator.fetchUserIdFromAccessToken(any(), any())).thenReturn("user1");
@@ -578,8 +602,7 @@ class CbPlanLearnerServiceImplTest {
         Map<String, Object> plan = Map.of(
                 Constants.PLAN_ID, "plan1",
                 Constants.CONTENT_LIST, List.of("course1"),
-                Constants.END_DATE_REQUEST, Instant.now()
-        );
+                Constants.END_DATE_REQUEST, Instant.now());
 
         when(redisCacheMgr.getFromCache(anyString())).thenReturn(null);
         when(cbPlanCacheMgr.getCbPlanForAllAndOrgId(any(), any())).thenReturn(List.of(plan));
@@ -588,6 +611,7 @@ class CbPlanLearnerServiceImplTest {
         assertEquals(Constants.SUCCESS, resp.getParams().getStatus());
         assertEquals(1, resp.getResult().get(Constants.COUNT));
     }
+
     @Test
     void getCBPlanListForUser_userNotFound() {
         when(accessTokenValidator.fetchUserIdFromAccessToken(any(), any())).thenReturn("user1");
@@ -600,12 +624,14 @@ class CbPlanLearnerServiceImplTest {
         assertEquals(Constants.FAILED, resp.getParams().getStatus());
         assertEquals(HttpStatus.BAD_REQUEST, resp.getResponseCode());
     }
+
     @Test
     void getCBPlanListForUser_blankUserId() {
         when(accessTokenValidator.fetchUserIdFromAccessToken(any(), any())).thenReturn("");
         ApiResponse resp = service.getCBPlanListForUser("org1", "token", false);
         assertNotNull(resp);
     }
+
     @Test
     void getCBPlanListForUser_exception() {
         when(accessTokenValidator.fetchUserIdFromAccessToken(any(), any())).thenThrow(new RuntimeException("boom"));
@@ -613,11 +639,13 @@ class CbPlanLearnerServiceImplTest {
         assertEquals(Constants.FAILED, resp.getParams().getStatus());
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, resp.getResponseCode());
     }
+
     @Test
     void getCBPlanCourseListForUser_blankUserId() {
         ApiResponse resp = service.getCBPlanCourseListForUser("", "org1");
         assertEquals(HttpStatus.BAD_REQUEST, resp.getResponseCode());
     }
+
     @Test
     void getCBPlanCourseListForUser_cacheHit() throws Exception {
         String json = new ObjectMapper().writeValueAsString(Map.of("course1", "plan1"));
@@ -625,6 +653,7 @@ class CbPlanLearnerServiceImplTest {
         ApiResponse resp = service.getCBPlanCourseListForUser("user1", "org1");
         assertEquals(HttpStatus.OK, resp.getResponseCode());
     }
+
     @Test
     void getCBPlanCourseListForUser_cacheMiss() {
         when(redisCacheMgr.getFromCache(anyString())).thenReturn(null);
@@ -636,6 +665,5 @@ class CbPlanLearnerServiceImplTest {
     void removeDuplicateCourses_empty() {
         assertTrue(service.removeDuplicateCourses(Collections.emptyList()).isEmpty());
     }
-
 
 }

@@ -1514,7 +1514,7 @@ class CbPlanServiceImplTest {
                 .thenThrow(new RuntimeException("Test exception"));
 
         try {
-            ApiResponse response = cbPlanService.searchCbPlan(criteria, "token");
+            cbPlanService.searchCbPlan(criteria, "token");
             fail("Expected CustomException to be thrown");
         } catch (Exception e) {
             assertTrue(e.getMessage().contains("error while processing"));
