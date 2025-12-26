@@ -115,6 +115,13 @@ public class CbPlanServiceImpl {
                 ApiResponse resp = (ApiResponse) cassandraOperation.insertRecord(Constants.KEYSPACE_SUNBIRD,
                         Constants.TABLE_CB_PLAN_V2, requestMap);
                 if (Constants.SUCCESS.equals(resp.get(Constants.RESPONSE))) {
+                    String planId = String.valueOf(requestMap.get(Constants.PLAN_ID));
+                    requestMap.put(Constants.ID, planId);
+                    List<String> contentIds =
+                            (List<String>) requestMap.get(Constants.CONTENT_LIST);
+                    if (CollectionUtils.isNotEmpty(contentIds)) {
+                        upsertCbPlanContentLookup(planId, contentIds);
+                    }
                     requestMap.put(Constants.ID, String.valueOf(requestMap.get(Constants.PLAN_ID)));
                     Map<String, Object> sanitizedMap = sanitizeForElastic(requestMap);
                     esUtilService.addDocument(serverProperties.getCpPlanIndex(), Constants.INDEX_TYPE,
@@ -210,6 +217,16 @@ public class CbPlanServiceImpl {
                 Map<String, Object> resp = cassandraOperation.updateRecord(Constants.KEYSPACE_SUNBIRD,
                         Constants.TABLE_CB_PLAN_V2, updatedRequest, Map.of(Constants.PLAN_ID, cbPlanId));
                 if (resp.get(Constants.RESPONSE).equals(Constants.SUCCESS)) {
+                    List<String> contentIds =
+                            (List<String>) updatedRequest.get(Constants.CONTENT_LIST);
+                    if (CollectionUtils.isNotEmpty(contentIds)) {
+                        // For the content Retirement validation Impl
+                        List<String> existingContentIds =
+                                (List<String>) existingCbPlan.get(Constants.CONTENT_LIST);
+                        upsertCbPlanContentLookup(cbPlanId, getAddedContent(existingContentIds, contentIds));
+                        removeCbPlanInfoForUpdateOrDeleteCbPlan(cbPlanId, getDeletedContent(existingContentIds, contentIds));
+                    }
+
                     Map<String, Object> sanitizedMap = sanitizeForElastic(updatedRequest);
                     esUtilService.updateDocument(serverProperties.getCpPlanIndex(), Constants.INDEX_TYPE, cbPlanId,
                             sanitizedMap, serverProperties.getElasticCbPlanJsonPath());
@@ -738,6 +755,11 @@ public class CbPlanServiceImpl {
                 if (resp.get(Constants.RESPONSE).equals(Constants.SUCCESS)) {
                     cbPlan.put(Constants.ID, cbPlanId);
                     cbPlan.put(Constants.STATUS, Constants.CB_RETIRE);
+                    List<String> contentIds =
+                            (List<String>) cbPlan.get(Constants.CONTENT_LIST);
+                    if (CollectionUtils.isNotEmpty(contentIds)) {
+                        removeCbPlanInfoForUpdateOrDeleteCbPlan(cbPlanId, contentIds);
+                    }
                     Map<String, Object> sanitizedMap = sanitizeForElastic(cbPlan);
                     // TO DO : need to use upsert method instead of addDocument
                     esUtilService.addDocument(serverProperties.getCpPlanIndex(), Constants.INDEX_TYPE,
@@ -1100,5 +1122,137 @@ public class CbPlanServiceImpl {
             response.getParams().setErr("Error processing existing CB Plan data");
             response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private void upsertCbPlanContentLookup(String planId, List<String> contentIds) {
+
+        for (String contentId : contentIds) {
+
+            Map<String, Object> where = new HashMap<>();
+            where.put("contentid", contentId);
+
+            Set<String> planIds = new HashSet<>();
+
+            List<Map<String, Object>> rows =
+                    cassandraOperation.getRecordsByProperties(
+                            Constants.KEYSPACE_SUNBIRD,
+                            Constants.TABLE_CB_PLAN_V2_CONTENT_LOOKUP,
+                            where,
+                            Arrays.asList("planid"),
+                            1
+                    );
+
+            if (CollectionUtils.isNotEmpty(rows)) {
+                Object existing = rows.get(0).get("planId");
+                if (existing instanceof Set) {
+                    planIds.addAll((Set<String>) existing);
+                }
+            }
+
+            if (!planIds.contains(planId)) {
+                planIds.add(planId);
+
+                Map<String, Object> update = new HashMap<>();
+                update.put("planid", planIds);
+
+                cassandraOperation.updateRecord(
+                        Constants.KEYSPACE_SUNBIRD,
+                        Constants.TABLE_CB_PLAN_V2_CONTENT_LOOKUP,
+                        update,
+                        where
+                );
+            }
+        }
+    }
+
+    private void removeCbPlanInfoForUpdateOrDeleteCbPlan(String cbPlanId, List<String> contentIds) {
+
+        for (String contentId : contentIds) {
+
+            Map<String, Object> where = new HashMap<>();
+            where.put("contentid", contentId);
+
+            List<Map<String, Object>> rows =
+                    cassandraOperation.getRecordsByProperties(
+                            Constants.KEYSPACE_SUNBIRD,
+                            Constants.TABLE_CB_PLAN_V2_CONTENT_LOOKUP,
+                            where,
+                            Arrays.asList("planid"),
+                            1
+                    );
+
+            if (CollectionUtils.isEmpty(rows)) {
+                log.debug("No row found for contentId {}", contentId);
+                continue; // Skip processing if no rows found
+            }
+
+            Object existing = rows.get(0).get("planId");
+            if (!(existing instanceof Set)) {
+                log.warn("Invalid planid data for contentId {}", contentId);
+                continue; // Skip processing if data type is invalid
+            }
+
+            Set<String> planIds = new HashSet<>((Set<String>) existing);
+
+            // Case 1: only one planId and it matches → DELETE row
+            if (planIds.size() == 1 && planIds.contains(cbPlanId)) {
+
+                cassandraOperation.deleteRecord(
+                        Constants.KEYSPACE_SUNBIRD,
+                        Constants.TABLE_CB_PLAN_V2_CONTENT_LOOKUP,
+                        where
+                );
+
+                log.info(
+                        "Deleted row for contentId {} (only cbPlanId {} existed)",
+                        contentId, cbPlanId
+                );
+            }
+
+            // Case 2: multiple planIds and contains cbPlanId → REMOVE & UPDATE
+            if (planIds.size() > 1 && planIds.contains(cbPlanId)) {
+
+                planIds.remove(cbPlanId);
+
+                Map<String, Object> update = new HashMap<>();
+                update.put("planid", planIds);
+
+                cassandraOperation.updateRecord(
+                        Constants.KEYSPACE_SUNBIRD,
+                        Constants.TABLE_CB_PLAN_V2_CONTENT_LOOKUP,
+                        update,
+                        where
+                );
+
+                log.info(
+                        "Removed cbPlanId {} from contentId {}. Remaining plans={}",
+                        cbPlanId, contentId, planIds
+                );
+            }
+        }
+    }
+
+    private List<String> getAddedContent(List<String> existingContent, List<String> updatedContent) {
+
+        Set<String> existingSet =
+                new HashSet<>(existingContent == null ? List.of() : existingContent);
+
+        Set<String> updatedSet =
+                new HashSet<>(updatedContent == null ? List.of() : updatedContent);
+
+        updatedSet.removeAll(existingSet);
+        return new ArrayList<>(updatedSet);
+    }
+
+    private List<String> getDeletedContent(List<String> existingContent, List<String> updatedContent) {
+
+        Set<String> existingSet =
+                new HashSet<>(existingContent == null ? List.of() : existingContent);
+
+        Set<String> updatedSet =
+                new HashSet<>(updatedContent == null ? List.of() : updatedContent);
+
+        existingSet.removeAll(updatedSet);
+        return new ArrayList<>(existingSet);
     }
 }
