@@ -1,6 +1,5 @@
 package com.igot.cb.util;
 
-
 /**
  * @author Mahesh RV
  */
@@ -120,7 +119,7 @@ public class Constants {
     public static final String REQUEST_PAYLOAD = "requestPayload";
     public static final String JWT_SECRET_KEY = "community_search_result";
     public static final String SEARCH_RESULTS = "search_results";
-    public static final String MINIMUM_CHARACTERS_NEEDED= "Minimum 3 characters are required to search";
+    public static final String MINIMUM_CHARACTERS_NEEDED = "Minimum 3 characters are required to search";
     public static final String FAILED_CONST = "FAILED";
     public static final String CATEGORY_ID = "categoryId";
     public static final String PARENT_ID = "parentId";
@@ -162,7 +161,7 @@ public class Constants {
     public static final String LOGO = "logo";
     public static final String ORG_LIST = "orgList";
     public static final String COMMUNITY_ID_LOWERCASE = "communityid";
-    public static final String USER_PREFIX = "user:" ;
+    public static final String USER_PREFIX = "user:";
     public static final String USER_ID_LOWER_CASE = "userid";
     public static final String INCREMENT = "increment";
     public static final String DECREMENT = "decrement";
@@ -181,7 +180,7 @@ public class Constants {
     public static final String OTHER_REASON = "otherReasons";
     public static final String OTHERS = "Others";
     public static final String REASON = "reason";
-    public static final String USER_REPORTED_COMMUNITY= "user_reported_communities";
+    public static final String USER_REPORTED_COMMUNITY = "user_reported_communities";
     public static final String COMMUNITY_REPORTED_BY_USER = "communities_reportedby_user";
     public static final String REPORTED = "reported";
     public static final String COMMUNITY_REPORT_FAILED = "Failed to report discussion";
@@ -204,7 +203,7 @@ public class Constants {
     public static final String API_COMMUNITY_PUBLISH = "api.community.publish";
     public static final String COMMUNITY_PUBLISH_PAYLOAD_VALIDATION_FILE = "/payloadValidation/communityPublishPayloadValidation.json";
     public static final String PUBLISHED_BY = "publishedBy";
-    public static final String  MODERATORS = "moderators";
+    public static final String MODERATORS = "moderators";
     public static final String TABLE_USER = "user";
     public static final String ROOT_ORG_ID = "rootOrgId";
     public static final String FIRST_NAME = "firstname";
@@ -250,9 +249,9 @@ public class Constants {
     public static final String MDO_LEADER_NAME = "mdo_leader_name";
     public static final String COMMUNITY_NAME_TAG = "community_name";
     public static final String MODERATOR_NAME = "moderator_name";
-    public static String CommunityCreationAllowed = "isCommunityCreationAllowed";
-    public static String CREATE_ERROR_MSG_WITHIN_COMMUNITY = "A community with this name already exists. Please choose a different name to continue.";
-    public static String CREATE_ERROR_MSG_COMMUNITY="Community name already exists. Do you still want to continue?";
+    public static final String COMMUNITY_CREATION_ALLOWED = "isCommunityCreationAllowed";
+    public static final String createErrorMsgWithinCommunity = "A community with this name already exists. Please choose a different name to continue.";
+    public static final String CREATE_ERROR_MSG_COMMUNITY = "Community name already exists. Do you still want to continue?";
     public static final String TRUE = "True";
     public static final String REDIS_DATA_TEMPLATE = "redisDataTemplate";
     public static final String SEARCH_RESULT_REDIS_TEMPLATE = "searchResultRedisTemplate";
@@ -304,9 +303,9 @@ public class Constants {
     public static final String CONTENT_READ_END_POINT = "content-read-endpoint";
     public static final String CONTENT_READ_END_POINT_FIELDS = "content-read-endpoint-fields";
     public static final String OK = "OK";
-	public static final String RESPONSE_CODE = "responseCode";
-	public static final String RESULT = "result";
-	public static final String CONTENT = "content";
+    public static final String RESPONSE_CODE = "responseCode";
+    public static final String RESULT = "result";
+    public static final String CONTENT = "content";
     public static final String REDIS_HOST = "redis.host";
     public static final String REDIS_PORT = "redis.port";
     public static final String REDIS_TIMEOUT = "redis.timeout";
@@ -337,20 +336,20 @@ public class Constants {
     public static final String API_CB_PLAN_CREATE = "api.cb.plan.v2.create";
     public static final String API_CB_PLAN_UPDATE = "api.cb.plan.v2.update";
     public static final String API_CB_PLAN_PUBLISH = "api.cb.plan.v2.publish";
-    public static final String IS_APAR ="isApar";
+    public static final String IS_APAR = "isApar";
     public static final String DRAFT_DATA = "draftData";
     public static final String TABLE_CB_PLAN_V2 = "cb_plan_v2";
     public static final String CREATED = "Cbplan created successfully";
     public static final String CONTEXT_DATA_REQUEST = "contextData";
     public static final String SINGLE = "Single";
-    public static final String CUSTOM ="Custom";
+    public static final String CUSTOM = "Custom";
     public static final String ORG_ID_LIST = "orgIdList";
     public static final String TABLE_CB_PLAN_V2_LOOKUP_BY_ORG = "cb_plan_v2_lookup_by_org";
     public static final String TABLE_CB_PLAN_V2_LOOKUP_BY_ALL_ORG = "cb_plan_v2_lookup_by_all_org";
     public static final String ORG_SCOPE = "orgScope";
     public static final String X_AUTH_USER_ROLES = "x-authenticated-user-roles";
     public static final String LIVE = "Live";
-    public static final	String CB_PUBLISHED_BY	= "publishedby";
+    public static final String CB_PUBLISHED_BY = "publishedby";
     public static final Object UPDATED = "Updated";
     public static final String MESSAGE = "message";
     public static final String EXCEPTION_MSG_DELETE = "Exception occurred while deleting record from ";
@@ -373,7 +372,7 @@ public class Constants {
     protected static final byte[] CIPHER_KEY = new byte[] { 'T', 'h', 'i', 's', 'A', 's', 'I', 'S', 'e', 'r', 'c', 'e',
             'K', 't', 'e', 'y' };
     public static final String CREATED_AT_REQ = "createdat";
-    public static final String PUBLISHED_AT= "publishedAt";
+    public static final String PUBLISHED_AT = "publishedAt";
     public static final String NUMBER = "number";
     public static final String LONG = "long";
     public static final String DATE = "date";
@@ -386,11 +385,11 @@ public class Constants {
     public static final String PLAN_ID_RQST = "planid";
     public static final String ORG_ID_RQST = "orgid";
     public static final String PLAN_YEAR = "planyear";
-    public static final String PUBLISHED_AT_KEY= "publishedat";
+    public static final String PUBLISHED_AT_KEY = "publishedat";
     public static final String END_DATE_KEY = "endDate";
     public static final String CREATED_AT_KEY = "createdat";
     public static final String DRAFT_DATA_KEY = "draftdata";
-    public static final String CBP_PLAN_USER_LIST_API ="api.cbplan.user.list";
+    public static final String CBP_PLAN_USER_LIST_API = "api.cbplan.user.list";
     public static final String COUNT = "count";
     public static final String VERIFIED = "VERIFIED";
     public static final String SECURE_SETTINGS = "secureSettings";
@@ -413,9 +412,9 @@ public class Constants {
     public static final String BY_PLANS_SUFFIX = ":byPlan";
     public static final String BY_COURSE_SUFFIX = ":course";
     public static final String CB_PLAN_USER_LOOKUP_API = "api.cbplan.user.lookup";
-    public static final String TABLE_DECLARATION_ACKNOWLEDGMENT = "consent_acknowledgement" ;
-    public static final String TABLE_CONSENT_DETAILS = "consent_details" ;
-    public static final String CONSENT_ID= "consentId";
+    public static final String TABLE_DECLARATION_ACKNOWLEDGMENT = "consent_acknowledgement";
+    public static final String TABLE_CONSENT_DETAILS = "consent_details";
+    public static final String CONSENT_ID = "consentId";
     public static final String SUBMITTED_BY = "submittedBy";
     public static final String SUBMITTED_AT = "submittedAt";
     public static final String ADDITIONAL_ATTRIBUTES = "additionalAttributes";
@@ -461,7 +460,7 @@ public class Constants {
     public static final String BP_ASSIGNMENT_SUBMIT = "BP_ASSIGNMENT_SUBMIT";
     public static final String HTML_TEMPLATE = "HTMLTemplate";
 
-    public static final String ACCESS_SETTINGS_ENABLED ="accessSettingsEnabled";
+    public static final String ACCESS_SETTINGS_ENABLED = "accessSettingsEnabled";
     public static final String PROFILE_DETAILS_LOWERCASE = "profiledetails";
     public static final String UNDERSCORE = "_";
     public static final String CONTEXT_ID_KEY = "contextId";
