@@ -11,6 +11,10 @@ import org.springframework.http.HttpStatus;
 
 public class ProjectUtil {
 
+    private ProjectUtil() {
+        throw new IllegalStateException("Utility class");
+    }
+
     public static ApiResponse createDefaultResponse(String api) {
         ApiResponse response = new ApiResponse();
         response.setId(api);
@@ -27,7 +31,6 @@ public class ProjectUtil {
         response.getParams().setErrMsg(errorMessage);
         response.getParams().setStatus(Constants.FAILED);
     }
-
 
     public static Date getTimeStamp() {
         return new Timestamp(System.currentTimeMillis());
