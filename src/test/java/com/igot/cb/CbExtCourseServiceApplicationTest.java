@@ -31,29 +31,26 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
-
 /**
  * @author Mahesh RV
  * @author Ruksana
  */
 @ExtendWith(MockitoExtension.class)
-public class CbExtCourseServiceApplicationTest {
+class CbExtCourseServiceApplicationTest {
 
   @InjectMocks
   private CbExtCourseServiceApplication application;
 
-
   @Test
-  public void testMainMethod() {
+  void testMainMethod() {
     // Testing the main method using MockedStatic
     try (MockedStatic<SpringApplication> mockedStatic = Mockito.mockStatic(SpringApplication.class)) {
       // Arrange and Act
-      CbExtCourseServiceApplication.main(new String[]{"arg1", "arg2"});
+      CbExtCourseServiceApplication.main(new String[] { "arg1", "arg2" });
 
       // Assert
-      mockedStatic.verify(() ->
-          SpringApplication.run(eq(CbExtCourseServiceApplication.class), eq(new String[]{"arg1", "arg2"}))
-      );
+      mockedStatic.verify(
+          () -> SpringApplication.run(eq(CbExtCourseServiceApplication.class), eq(new String[] { "arg1", "arg2" })));
     }
   }
 
@@ -95,7 +92,7 @@ public class CbExtCourseServiceApplicationTest {
   }
 
   @Test
-  void testGetClientHttpRequestFactory_UsingSubclass() throws Exception{
+  void testGetClientHttpRequestFactory_UsingSubclass() throws Exception {
 
     Method method = CbExtCourseServiceApplication.class.getDeclaredMethod("getClientHttpRequestFactory");
     method.setAccessible(true);
@@ -113,11 +110,12 @@ public class CbExtCourseServiceApplicationTest {
     method.setAccessible(true);
 
     // Create mock objects for static methods
-    try (MockedStatic<org.apache.hc.client5.http.impl.classic.HttpClients> httpClientsMock =
-        Mockito.mockStatic(org.apache.hc.client5.http.impl.classic.HttpClients.class)) {
+    try (MockedStatic<org.apache.hc.client5.http.impl.classic.HttpClients> httpClientsMock = Mockito
+        .mockStatic(org.apache.hc.client5.http.impl.classic.HttpClients.class)) {
 
       // Mock builder chain
-      org.apache.hc.client5.http.impl.classic.HttpClientBuilder builderMock = mock(org.apache.hc.client5.http.impl.classic.HttpClientBuilder.class);
+      org.apache.hc.client5.http.impl.classic.HttpClientBuilder builderMock = mock(
+          org.apache.hc.client5.http.impl.classic.HttpClientBuilder.class);
       CloseableHttpClient httpClientMock = mock(CloseableHttpClient.class);
 
       // Set up expectations for the builder pattern
@@ -128,8 +126,8 @@ public class CbExtCourseServiceApplicationTest {
 
       // Capture RequestConfig to verify timeout
       ArgumentCaptor<RequestConfig> configCaptor = ArgumentCaptor.forClass(RequestConfig.class);
-      ArgumentCaptor<PoolingHttpClientConnectionManager> managerCaptor =
-          ArgumentCaptor.forClass(PoolingHttpClientConnectionManager.class);
+      ArgumentCaptor<PoolingHttpClientConnectionManager> managerCaptor = ArgumentCaptor
+          .forClass(PoolingHttpClientConnectionManager.class);
 
       // Invoke method
       method.invoke(application);
@@ -139,7 +137,8 @@ public class CbExtCourseServiceApplicationTest {
       verify(builderMock).setConnectionManager(managerCaptor.capture());
       verify(builderMock).build();
 
-      // This part won't actually work since RequestConfig doesn't expose its values easily
+      // This part won't actually work since RequestConfig doesn't expose its values
+      // easily
       // but demonstrates capturing for verification
     }
   }

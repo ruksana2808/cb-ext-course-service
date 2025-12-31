@@ -61,9 +61,10 @@ class CbPlanServiceImplTest {
         ReflectionTestUtils.setField(cbPlanService, "contentService", contentService);
         ReflectionTestUtils.setField(cbPlanService, "esUtilService", esUtilService);
         ReflectionTestUtils.setField(cbPlanService, "serverProperties", serverProperties);
-        ReflectionTestUtils.setField(serverProperties, "cpPlanIndex", "test-index");
-        ReflectionTestUtils.setField(serverProperties, "elasticCbPlanJsonPath", "test-path");
-        ReflectionTestUtils.setField(serverProperties, "cbPlanUpdateAllowedFields", "name,contextDataRequest,endDate");
+        when(serverProperties.getCpPlanIndex()).thenReturn("test-index");
+        when(serverProperties.getElasticCbPlanJsonPath()).thenReturn("test-path");
+        when(serverProperties.getCbPlanUpdateAllowedFields())
+                .thenReturn(Arrays.asList("name", "contextDataRequest", "endDate"));
     }
 
     @Test
@@ -291,14 +292,9 @@ class CbPlanServiceImplTest {
         when(esUtilService.searchDocuments(anyString(), any(), anyString())).thenReturn(searchResult);
 
         when(contentService.enrichContentInfoForCBPlan(anyList())).thenReturn(new ArrayList<>());
-        try {
-            ApiResponse response = cbPlanService.searchCbPlan(criteria, "token");
-            assertNotNull(response);
-            assertEquals(Constants.SUCCESS, response.getParams().getStatus());
-        } catch (Exception e) {
-            // Exception is swallowed to avoid test failure due to mock setup issues.
-            // TODO: Fix mock setup and remove try-catch.
-        }
+        ApiResponse response = cbPlanService.searchCbPlan(criteria, "token");
+        assertNotNull(response);
+        assertEquals(Constants.SUCCESS, response.getParams().getStatus());
     }
 
     @Test
