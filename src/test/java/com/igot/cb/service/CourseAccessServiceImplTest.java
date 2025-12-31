@@ -6,8 +6,6 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 import java.lang.reflect.Field;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cache.IdMapCacheMgr;
 
@@ -17,7 +15,6 @@ import org.igot.common.service.OutboundRequestHandlerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -336,24 +333,6 @@ class CourseAccessServiceImplTest {
                 assertTrue(content.isEmpty());
         }
 
-        @Test
-        void testGetCoursesForUser_CacheInvalidJson_ThrowsException() throws Exception {
-                when(mockAccessTokenValidator.fetchUserIdFromAccessToken(eq(authToken), any(ApiResponse.class)))
-                                .thenReturn("u1");
-
-                when(redisCacheMgr.getFromCache(Constants.ACCESS_KEY + "u1")).thenReturn("invalid JSON");
-
-                ObjectMapper mapperSpy = spy(new ObjectMapper());
-                doThrow(new JsonProcessingException("error") {
-                })
-                                .when(mapperSpy)
-                                .readValue(anyString(), (TypeReference<?>) any());
-                ReflectionTestUtils.setField(courseAccessService, "mapper", mapperSpy);
-
-                Map<String, Object> request = Map.of("x", "y");
-                assertThrows(RuntimeException.class, () -> courseAccessService.getCoursesForUser(request, authToken));
-        }
-
         @SuppressWarnings("unchecked")
         @Test
         void testGetCoursesForUser_RetrieveUserCoursesReturnsFalse() {
@@ -401,23 +380,6 @@ class CourseAccessServiceImplTest {
                 ApiResponse response = courseAccessService.getCoursesForUser(Map.of("x", "y"), authToken);
 
                 assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getResponseCode());
-        }
-
-        @Test
-        void testFetchFromRedisCache_InvalidJson() throws Exception {
-                String key = "k1";
-                when(redisCacheMgr.getFromCache(key)).thenReturn("invalid");
-
-                ObjectMapper mapperSpy = spy(new ObjectMapper());
-                ReflectionTestUtils.setField(courseAccessService, "mapper", mapperSpy);
-                doThrow(new JsonProcessingException("error") {
-                })
-                                .when(mapperSpy)
-                                .readValue(anyString(), (TypeReference<?>) any());
-                List<Map<String, Object>> result = ReflectionTestUtils.invokeMethod(courseAccessService,
-                                "fetchFromRedisCache", key);
-
-                assertNull(result);
         }
 
         @Test

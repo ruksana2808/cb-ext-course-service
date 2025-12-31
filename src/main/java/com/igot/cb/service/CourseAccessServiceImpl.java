@@ -111,7 +111,7 @@ public class CourseAccessServiceImpl {
         }
 
         String cachedCourseForUser = redisCacheMgr.getFromCache(Constants.ACCESS_KEY + userId);
-        if (cachedCourseForUser != null && !cachedCourseForUser.isEmpty()){
+        if (cachedCourseForUser != null && !cachedCourseForUser.isEmpty()) {
             if (cachedCourseForUser.equalsIgnoreCase(Constants.NO_RECORDS_FOUND)){
                 response.getResult().put(Constants.CONTENT, new ArrayList<>());
                 return response;
@@ -124,7 +124,7 @@ public class CourseAccessServiceImpl {
                 log.info("AccessSettingRule evalution: UserId: ", userId);
                 return response;
             } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+                log.error("Failed parsing cached redis data for user {}: {}", userId, e.getMessage());
             }
         }
 
@@ -139,9 +139,9 @@ public class CourseAccessServiceImpl {
                     try {
                         redisCacheMgr.putInCache(Constants.ACCESS_KEY+userId, mapper.writeValueAsString(userCourses));
                     } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
+                        throw e;
                     }
-                }else {
+                } else {
                     redisCacheMgr.putInCache(Constants.ACCESS_KEY+userId, Constants.NO_RECORDS_FOUND);
                 }
                 response.getResult().put(Constants.CONTENT, userCourses);
@@ -222,7 +222,7 @@ public class CourseAccessServiceImpl {
 
     public ApiResponse getAssignedCoursesForUser(Map<String, Object> request, String authToken) {
         log.info("CourseAccessServiceImpl::getAssignedCoursesForUser:inside");
-        ApiResponse response = ApiResponse.createDefaultResponse("api.courseAccess.getCoursesForUser");
+        ApiResponse response = ApiResponse.createDefaultResponse("api.courseAccess.getAssignedCoursesForUser");
         try {
             String userId = accessTokenValidator.fetchUserIdFromAccessToken(authToken, response);
             if (userId == null) {
@@ -241,12 +241,23 @@ public class CourseAccessServiceImpl {
                 return response;
             }
             String redisKey = Constants.ACCESS_KEY + "_" + courseCategory + "_" + userId;
-            List<Map<String, Object>> cacheResult = fetchFromRedisCache(redisKey);
-
-            if (cacheResult != null) {
-                response.getResult().put(Constants.CONTENT, cacheResult);
-                return response;
+            String cachedData = redisCacheMgr.getFromCache(redisKey);
+            if (StringUtils.hasText(cachedData)) {
+                try {
+                    List<Map<String, Object>> cacheResult = new ArrayList<>();
+                    cacheResult = mapper.readValue(
+                            cachedData,
+                            new TypeReference<List<Map<String, Object>>>() {}
+                    );
+                    if (!CollectionUtils.isEmpty(cacheResult)) {
+                        response.getResult().put(Constants.CONTENT, cacheResult);
+                        return response;
+                    }
+                } catch (JsonProcessingException e) {
+                    log.error("Failed parsing cached redis data for key {}: {}", redisKey, e.getMessage());
+                }
             }
+            
             List<String> courseIds = getCoursesFromCacheOrService(courseCategory);
             if (CollectionUtils.isEmpty(courseIds)) {
                 log.warn("No course identifiers found for category: {}", courseCategory);
@@ -285,7 +296,9 @@ public class CourseAccessServiceImpl {
                 }
             }
             log.info("AccessSettingRule evaluation: UserId: {} | Courses retrieved: {}", userId, userCourses.size());
-            redisCacheMgr.putInCache(Constants.ACCESS_KEY+Constants.UNDERSCORE+courseCategory+Constants.UNDERSCORE+userId, mapper.writeValueAsString(userCourses));
+            redisCacheMgr.putInCache(
+                    Constants.ACCESS_KEY + Constants.UNDERSCORE + courseCategory + Constants.UNDERSCORE + userId,
+                    mapper.writeValueAsString(userCourses));
             response.getResult().put(Constants.CONTENT, userCourses);
         } catch (Exception e) {
             log.error("Error occurred while evaluating access setting rules: {}", e.getMessage(), e);
@@ -358,22 +371,6 @@ public class CourseAccessServiceImpl {
             return Collections.emptyList();
         }
         return Collections.emptyList();
-    }
-
-    private List<Map<String, Object>> fetchFromRedisCache(String redisKey) {
-        String cachedData = redisCacheMgr.getFromCache(redisKey);
-        if (!StringUtils.hasText(cachedData)) {
-            return null;
-        }
-        try {
-            return mapper.readValue(
-                    cachedData,
-                    new TypeReference<List<Map<String, Object>>>() {}
-            );
-        } catch (JsonProcessingException e) {
-            log.error("Failed parsing cached redis data for key {}: {}", redisKey, e.getMessage());
-            return null;
-        }
     }
 
 
