@@ -244,11 +244,10 @@ public class CourseAccessServiceImpl {
             String cachedData = redisCacheMgr.getFromCache(redisKey);
             if (StringUtils.hasText(cachedData)) {
                 try {
-                    List<Map<String, Object>> cacheResult = new ArrayList<>();
-                    cacheResult = mapper.readValue(
+                    List<Map<String, Object>> cacheResult = mapper.readValue(
                             cachedData,
-                            new TypeReference<List<Map<String, Object>>>() {}
-                    );
+                            new TypeReference<List<Map<String, Object>>>() {
+                            });
                     if (!CollectionUtils.isEmpty(cacheResult)) {
                         response.getResult().put(Constants.CONTENT, cacheResult);
                         return response;
