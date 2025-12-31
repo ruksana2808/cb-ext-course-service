@@ -28,9 +28,8 @@ public class RequestValidator {
     }
 
     public List<String> validateCbPlanCreateRequest(ApiRequest request, boolean isCCA, String loggedInOrgId) {
-        List<String> errors = new ArrayList<>();
         Map<String, Object> rawRequest = (Map<String, Object>) request.getRequest();
-        errors = validateCbPlanRequest(rawRequest);
+        List<String> errors = validateCbPlanRequest(rawRequest);
         if (CollectionUtils.isNotEmpty(errors)) {
             return errors;
         }
@@ -137,7 +136,7 @@ public class RequestValidator {
                 }
 
                 Object criteriaValueObj = criteria.get(Constants.CRITERIA_VALUE);
-                List<String> criteriaValues = new ArrayList<>();
+                List<String> criteriaValues;
 
                 if (criteriaValueObj instanceof List) {
                     criteriaValues = (List<String>) criteriaValueObj;
@@ -158,7 +157,6 @@ public class RequestValidator {
                     rootOrgIdsInCriteria.addAll(criteriaValues);
                 }
             }
-
 
             if (!rootOrgCriteriaFound) {
                 if (!isCCA) {
