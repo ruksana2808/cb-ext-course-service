@@ -32,7 +32,8 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-@SuppressWarnings({"unchecked","deprecation"}) // deprecation: legacy factory usage for ES6 compatibility; unchecked: dynamic query map casting
+@SuppressWarnings({ "unchecked", "deprecation" }) // deprecation: legacy factory usage for ES6 compatibility; unchecked:
+                                                  // dynamic query map casting
 public class EsUtilServiceImpl implements EsUtilService {
     private final ElasticsearchClient elasticsearchClient;
     private final CbExtServerProperties cbExtServerProperties;
@@ -40,7 +41,8 @@ public class EsUtilServiceImpl implements EsUtilService {
 
     private static final Map<String, Map<String, Object>> schemaCache = new ConcurrentHashMap<>();
 
-    public EsUtilServiceImpl(ElasticsearchClient elasticsearchClient, CbExtServerProperties cbExtServerProperties, ObjectMapper objectMapper) {
+    public EsUtilServiceImpl(ElasticsearchClient elasticsearchClient, CbExtServerProperties cbExtServerProperties,
+            ObjectMapper objectMapper) {
         this.cbExtServerProperties = cbExtServerProperties;
         this.elasticsearchClient = elasticsearchClient;
         this.objectMapper = objectMapper;
@@ -64,7 +66,7 @@ public class EsUtilServiceImpl implements EsUtilService {
                     iterator.remove();
                 }
             }
-            IndexRequest<Map<String,Object>> indexRequest = new IndexRequest.Builder<Map<String, Object>>()
+            IndexRequest<Map<String, Object>> indexRequest = new IndexRequest.Builder<Map<String, Object>>()
                     .index(esIndexName)
                     .id(id)
                     .document(document)
@@ -85,30 +87,35 @@ public class EsUtilServiceImpl implements EsUtilService {
             // 1. Filter incoming map using schema (same logic as addDocument)
             JsonSchemaFactory schemaFactory = JsonSchemaFactory.getInstance();
             try (InputStream schemaStream = schemaFactory.getClass().getResourceAsStream(jsonFilePath)) {
-                Map<String, Object> schemaMap = objectMapper.readValue(schemaStream, new TypeReference<Map<String, Object>>() {});
+                Map<String, Object> schemaMap = objectMapper.readValue(schemaStream,
+                        new TypeReference<Map<String, Object>>() {
+                        });
                 updatedDocument.entrySet().removeIf(e -> !schemaMap.containsKey(e.getKey()));
             }
 
             Map<String, Object> merged = new HashMap<>();
             boolean existingFound = false;
             try {
-                GetResponse<Object> existing = elasticsearchClient.get(builder -> builder.index(index).id(entityId), Object.class);
+                GetResponse<Object> existing = elasticsearchClient.get(builder -> builder.index(index).id(entityId),
+                        Object.class);
                 if (existing.found()) {
                     Object src = existing.source();
                     if (src instanceof Map) {
-                        merged.putAll((Map<String,Object>) src);
+                        merged.putAll((Map<String, Object>) src);
                         existingFound = true;
                     }
                 }
             } catch (Exception getEx) {
-                log.debug("ES get (for merge) failed for index={}, id={}, treating as upsert. Cause: {}", index, entityId, getEx.getMessage());
+                log.debug("ES get (for merge) failed for index={}, id={}, treating as upsert. Cause: {}", index,
+                        entityId, getEx.getMessage());
             }
 
             // 2. Merge (overwrite / add updated fields only)
             merged.putAll(updatedDocument);
 
-            // 3. Index (acts as create or replace). We want refresh so subsequent reads see changes.
-            IndexRequest<Map<String,Object>> indexRequest = new IndexRequest.Builder<Map<String, Object>>()
+            // 3. Index (acts as create or replace). We want refresh so subsequent reads see
+            // changes.
+            IndexRequest<Map<String, Object>> indexRequest = new IndexRequest.Builder<Map<String, Object>>()
                     .index(index)
                     .id(entityId)
                     .document(merged)
@@ -117,7 +124,8 @@ public class EsUtilServiceImpl implements EsUtilService {
             IndexResponse response = elasticsearchClient.index(indexRequest);
             return (existingFound ? "updated" : "created") + ":" + response.result().jsonValue();
         } catch (Exception e) {
-            log.error("Error performing merge+index update for index={}, id={}: {}", index, entityId, e.getMessage(), e);
+            log.error("Error performing merge+index update for index={}, id={}: {}", index, entityId, e.getMessage(),
+                    e);
             return null;
         }
     }
@@ -139,11 +147,9 @@ public class EsUtilServiceImpl implements EsUtilService {
             }
             SearchRequest searchRequest = searchRequestBuilder.build();
             log.info("Final search query: {}", searchRequest.toString());
-            SearchResponse<Object> paginatedSearchResponse =
-                    elasticsearchClient.search(searchRequest, Object.class);
+            SearchResponse<Object> paginatedSearchResponse = elasticsearchClient.search(searchRequest, Object.class);
             List<Map<String, Object>> paginatedResult = extractPaginatedResult(paginatedSearchResponse);
-            Map<String, List<FacetDTO>> fieldAggregations =
-                    extractFacetData(paginatedSearchResponse, searchCriteria);
+            Map<String, List<FacetDTO>> fieldAggregations = extractFacetData(paginatedSearchResponse, searchCriteria);
             SearchResult searchResult = new SearchResult();
             searchResult.setData(paginatedResult);
             searchResult.setFacets(fieldAggregations);
@@ -174,7 +180,8 @@ public class EsUtilServiceImpl implements EsUtilService {
 
         for (String field : searchCriteria.getFacets()) {
             Aggregate aggregate = searchResponse.aggregations().get(field + "_agg");
-            if (aggregate == null) continue;
+            if (aggregate == null)
+                continue;
 
             List<FacetDTO> facetList = extractFacetList(aggregate);
             if (!facetList.isEmpty()) {
@@ -209,7 +216,6 @@ public class EsUtilServiceImpl implements EsUtilService {
         return list;
     }
 
-
     private List<Map<String, Object>> extractPaginatedResult(SearchResponse<Object> paginatedSearchResponse) {
         List<Map<String, Object>> paginatedResult = new ArrayList<>();
         for (Hit<Object> hit : paginatedSearchResponse.hits().hits()) {
@@ -218,7 +224,7 @@ public class EsUtilServiceImpl implements EsUtilService {
         return paginatedResult;
     }
 
-    private SearchRequest.Builder buildSearchRequest(SearchCriteria searchCriteria, String JsonFilePath) {
+    private SearchRequest.Builder buildSearchRequest(SearchCriteria searchCriteria, String jsonFilePath) {
         log.info("Building search query");
         if (searchCriteria == null || searchCriteria.toString().isEmpty()) {
             log.error("Search criteria body is missing");
@@ -227,13 +233,12 @@ public class EsUtilServiceImpl implements EsUtilService {
         BoolQuery.Builder boolQueryBuilder = buildFilterQuery(searchCriteria.getFilter());
         SearchRequest.Builder searchSourceBuilder = new SearchRequest.Builder();
         searchSourceBuilder.query(boolQueryBuilder.build()._toQuery());
-        addSortToSearchSourceBuilder(searchCriteria, searchSourceBuilder, JsonFilePath);
+        addSortToSearchSourceBuilder(searchCriteria, searchSourceBuilder, jsonFilePath);
         addRequestedFieldsToSearchSourceBuilder(searchCriteria, searchSourceBuilder);
         String searchString = searchCriteria.getSearchString();
         if (isNotBlank(searchString)) {
             boolQueryBuilder.must(
-                    Query.of(q -> q.match(m -> m.field(Constants.NAME).query(searchString)))
-            );
+                    Query.of(q -> q.match(m -> m.field(Constants.NAME).query(searchString))));
         }
         addFacetsToSearchSourceBuilder(searchCriteria.getFacets(), searchSourceBuilder);
         Query queryPart = buildQueryPart(searchCriteria.getQuery());
@@ -284,7 +289,8 @@ public class EsUtilServiceImpl implements EsUtilService {
         log.info("search:: buildMatchQuery");
         BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
         for (Map.Entry<String, Object> entry : matchMap.entrySet()) {
-            boolQueryBuilder.must(QueryBuilders.match(m -> m.field(entry.getKey()).query((FieldValue) entry.getValue())));
+            boolQueryBuilder
+                    .must(QueryBuilders.match(m -> m.field(entry.getKey()).query((FieldValue) entry.getValue())));
         }
         return boolQueryBuilder.build()._toQuery();
     }
@@ -293,7 +299,8 @@ public class EsUtilServiceImpl implements EsUtilService {
         log.info("search:: buildTermsQuery");
         BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
         for (Map.Entry<String, Object> entry : termsMap.entrySet()) {
-            boolQueryBuilder.must(QueryBuilders.terms(t -> t.field(entry.getKey()).terms((TermsQueryField) entry.getValue())));
+            boolQueryBuilder
+                    .must(QueryBuilders.terms(t -> t.field(entry.getKey()).terms((TermsQueryField) entry.getValue())));
         }
         return boolQueryBuilder.build()._toQuery();
     }
@@ -353,7 +360,8 @@ public class EsUtilServiceImpl implements EsUtilService {
         log.info("search::buildTermQuery");
         BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
         for (Map.Entry<String, Object> entry : termMap.entrySet()) {
-            boolQueryBuilder.must(QueryBuilders.term(t -> t.field(entry.getKey()).value((FieldValue) entry.getValue())));
+            boolQueryBuilder
+                    .must(QueryBuilders.term(t -> t.field(entry.getKey()).value((FieldValue) entry.getValue())));
         }
         return boolQueryBuilder.build()._toQuery();
     }
@@ -386,29 +394,31 @@ public class EsUtilServiceImpl implements EsUtilService {
             filterCriteriaMap.forEach(
                     (field, value) -> {
                         if (field.equals("must_not") && value instanceof ArrayList) {
-                            mustNotQueries.add(Query.of(q ->q.termsSet(t->t.field(field).terms((ArrayList<String>) value))));
+                            mustNotQueries.add(
+                                    Query.of(q -> q.termsSet(t -> t.field(field).terms((ArrayList<String>) value))));
                         } else if (value instanceof Boolean) {
-                            boolQueries.add(Query.of(q ->q.term(t->t.field(field).value((boolean)value))));
+                            boolQueries.add(Query.of(q -> q.term(t -> t.field(field).value((boolean) value))));
                         } else if (value instanceof List<?>) {
                             List<FieldValue> termsList = ((List<?>) value).stream()
                                     .map(v -> FieldValue.of(v.toString()))
                                     .collect(Collectors.toList());
                             if (cbExtServerProperties.getNonTextFields().contains(field)) {
-                                boolQueryBuilder.must(Query.of(q -> q.terms(t -> t.field(field).terms(terms -> terms.value(termsList)))));
+                                boolQueryBuilder.must(Query
+                                        .of(q -> q.terms(t -> t.field(field).terms(terms -> terms.value(termsList)))));
                             } else {
-                                boolQueryBuilder.must(Query.of(q -> q.terms(t -> t.field(field + Constants.KEYWORD).terms(terms -> terms.value(termsList)))));
+                                boolQueryBuilder.must(Query.of(q -> q.terms(t -> t.field(field + Constants.KEYWORD)
+                                        .terms(terms -> terms.value(termsList)))));
                             }
                         } else if (value instanceof String strValue) {
-                            boolQueryBuilder.must(Query.of(q -> q.terms(t ->
-                                    t.field(field + Constants.KEYWORD)
-                                            .terms(terms -> terms.value(List.of(FieldValue.of(strValue))))
-                            )));
+                            boolQueryBuilder.must(Query.of(q -> q.terms(t -> t.field(field + Constants.KEYWORD)
+                                    .terms(terms -> terms.value(List.of(FieldValue.of(strValue)))))));
                         } else if (value instanceof Set) {
                             Set<String> termsSet = (Set<String>) value;
                             List<FieldValue> termsList = termsSet.stream()
                                     .map(FieldValue::of)
                                     .toList();
-                            boolQueryBuilder.must(Query.of(q -> q.terms(t -> t.field(field + Constants.KEYWORD).terms(terms -> terms.value(termsList)))));
+                            boolQueryBuilder.must(Query.of(q -> q.terms(
+                                    t -> t.field(field + Constants.KEYWORD).terms(terms -> terms.value(termsList)))));
                         } else if (value instanceof Map) {
                             Map<String, Object> nestedMap = (Map<String, Object>) value;
                             if (isRangeQuery(nestedMap)) {
@@ -430,36 +440,44 @@ public class EsUtilServiceImpl implements EsUtilService {
                                             rangeQuery.lt(JsonData.of(rangeValue));
                                             break;
                                         default:
-                                            throw new IllegalArgumentException(Constants.UNSUPPORTED_RANGE + rangeValue);
+                                            throw new IllegalArgumentException(
+                                                    Constants.UNSUPPORTED_RANGE + rangeValue);
                                     }
                                 });
                                 rangeOrNullQuery.should(rangeQuery.build()._toQuery());
-                                rangeOrNullQuery.should(Query.of(q -> q.bool(b -> b.mustNot(Query.of(qn -> qn.exists(e -> e.field(field)))))));
+                                rangeOrNullQuery.should(Query.of(
+                                        q -> q.bool(b -> b.mustNot(Query.of(qn -> qn.exists(e -> e.field(field)))))));
                                 boolQueryBuilder.must(rangeOrNullQuery.build()._toQuery());
                             } else {
                                 nestedMap.forEach((nestedField, nestedValue) -> {
                                     String fullPath = field + "." + nestedField;
                                     if (nestedValue instanceof Boolean booleanValue) {
-                                        boolQueryBuilder.must(Query.of(q -> q.term(t -> t.field(fullPath).value(booleanValue))));
+                                        boolQueryBuilder.must(
+                                                Query.of(q -> q.term(t -> t.field(fullPath).value(booleanValue))));
                                     } else if (nestedValue instanceof String strValue) {
                                         List<FieldValue> termList = Collections.singletonList(FieldValue.of(strValue));
-                                        boolQueryBuilder.must(Query.of(q -> q.terms(t -> t.field(fullPath + Constants.KEYWORD).terms((TermsQueryField) termList))));
+                                        boolQueryBuilder
+                                                .must(Query.of(q -> q.terms(t -> t.field(fullPath + Constants.KEYWORD)
+                                                        .terms((TermsQueryField) termList))));
                                     } else if (nestedValue instanceof ArrayList) {
-                                        boolQueryBuilder.must(Query.of(q -> q.terms(t -> t.field(fullPath + Constants.KEYWORD).terms((TermsQueryField) nestedValue))));
+                                        boolQueryBuilder
+                                                .must(Query.of(q -> q.terms(t -> t.field(fullPath + Constants.KEYWORD)
+                                                        .terms((TermsQueryField) nestedValue))));
                                     }
                                 });
                             }
                         }
                     });
-            mustNotQueries.forEach(mustNotQuery -> boolQueryBuilder.mustNot(mustNotQuery));
-            boolQueries.forEach(boolQuery -> boolQueryBuilder.must(boolQuery));
+            mustNotQueries.forEach(boolQueryBuilder::mustNot);
+            boolQueries.forEach(boolQueryBuilder::must);
         }
         return boolQueryBuilder;
     }
 
     private boolean isRangeQuery(Map<String, Object> nestedMap) {
         return nestedMap.keySet().stream().anyMatch(key -> key.equals(Constants.SEARCH_OPERATION_GREATER_THAN_EQUALS) ||
-                key.equals(Constants.SEARCH_OPERATION_LESS_THAN_EQUALS) || key.equals(Constants.SEARCH_OPERATION_GREATER_THAN) ||
+                key.equals(Constants.SEARCH_OPERATION_LESS_THAN_EQUALS)
+                || key.equals(Constants.SEARCH_OPERATION_GREATER_THAN) ||
                 key.equals(Constants.SEARCH_OPERATION_LESS_THAN));
     }
 
@@ -467,9 +485,9 @@ public class EsUtilServiceImpl implements EsUtilService {
         return value != null && !value.trim().isEmpty();
     }
 
-    private void addSortToSearchSourceBuilder( SearchCriteria searchCriteria,
-                                               SearchRequest.Builder searchRequestBuilder,
-                                               String jsonFilePath) {
+    private void addSortToSearchSourceBuilder(SearchCriteria searchCriteria,
+            SearchRequest.Builder searchRequestBuilder,
+            String jsonFilePath) {
 
         if (isNotBlank(searchCriteria.getOrderBy()) && isNotBlank(searchCriteria.getOrderDirection())) {
             String sortField = searchCriteria.getOrderBy();
@@ -477,15 +495,17 @@ public class EsUtilServiceImpl implements EsUtilService {
             Map<String, Object> fieldMap = (Map<String, Object>) schemaMap.get(sortField);
 
             if (MapUtils.isEmpty(fieldMap) ||
-                    (!Constants.NUMBER.equals(fieldMap.get(Constants.TYPE)) && !Constants.LONG.equals(fieldMap.get(Constants.TYPE)) && !Constants.DATE.equals(fieldMap.get(Constants.TYPE)))) {
+                    (!Constants.NUMBER.equals(fieldMap.get(Constants.TYPE))
+                            && !Constants.LONG.equals(fieldMap.get(Constants.TYPE))
+                            && !Constants.DATE.equals(fieldMap.get(Constants.TYPE)))) {
                 sortField += Constants.KEYWORD;
             }
 
             String finalSortField = sortField;
             searchRequestBuilder.sort(s -> s.field(f -> f
                     .field(finalSortField)
-                    .order(Constants.ASC.equalsIgnoreCase(searchCriteria.getOrderDirection()) ? SortOrder.Asc : SortOrder.Desc)
-            ));
+                    .order(Constants.ASC.equalsIgnoreCase(searchCriteria.getOrderDirection()) ? SortOrder.Asc
+                            : SortOrder.Desc)));
         }
     }
 
@@ -498,10 +518,10 @@ public class EsUtilServiceImpl implements EsUtilService {
             if (searchCriteria.getRequestedFields().isEmpty()) {
                 log.error("Please specify at least one field to include in the results.");
             }
-            searchRequestBuilder.source(SourceConfig.of(sc -> sc.filter(filter -> filter.includes(searchCriteria.getRequestedFields()))));
+            searchRequestBuilder.source(
+                    SourceConfig.of(sc -> sc.filter(filter -> filter.includes(searchCriteria.getRequestedFields()))));
         }
     }
-
 
     public static Map<String, Object> readJsonSchema(String jsonFilePath) {
         if (schemaCache.containsKey(jsonFilePath)) {
@@ -510,7 +530,9 @@ public class EsUtilServiceImpl implements EsUtilService {
 
         try (InputStream schemaStream = JsonSchemaFactory.getInstance().getClass().getResourceAsStream(jsonFilePath)) {
             ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, Object> schemaMap = objectMapper.readValue(schemaStream, new TypeReference<Map<String, Object>>() {});
+            Map<String, Object> schemaMap = objectMapper.readValue(schemaStream,
+                    new TypeReference<Map<String, Object>>() {
+                    });
             schemaCache.put(jsonFilePath, schemaMap);
             return schemaMap;
         } catch (Exception e) {
