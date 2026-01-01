@@ -45,4 +45,11 @@ public class CbPlanDto {
     private Boolean isApar ;
 
     private List<String> orgIdList ;
+
+    public Boolean getIsApar() {
+        if (isApar == null) {
+            return false;
+        }
+        return isApar;
+    }
 }

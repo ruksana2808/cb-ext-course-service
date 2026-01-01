@@ -340,10 +340,10 @@ public class ContentStateServiceImpl {
             int existingStatus = ((Number) existingContent.getOrDefault(Constants.STATUS, 0)).intValue();
             Object existingCompletedTimeObj = existingContent.get(Constants.LAST_COMPLETED_TIME);
             Date existingCompletedTime;
-            if (existingCompletedTimeObj instanceof String) {
-                existingCompletedTime = parseDate((String) existingCompletedTimeObj);
-            } else if (existingCompletedTimeObj instanceof Date) {
-                existingCompletedTime = (Date) existingCompletedTimeObj;
+            if (existingCompletedTimeObj instanceof String strCompletedTime) {
+                existingCompletedTime = parseDate(strCompletedTime);
+            } else if (existingCompletedTimeObj instanceof Date dateCompletedTime) {
+                existingCompletedTime = dateCompletedTime;
             } else {
                 existingCompletedTime = null;
             }
@@ -373,7 +373,7 @@ public class ContentStateServiceImpl {
 
         updatedContent.put(Constants.LAST_UPDATED_TIME, Instant.now());
         updatedContent.put(Constants.USER_ID, userId);
-        updatedContent.replaceAll((k, v) -> v instanceof Date ? ((Date) v).toInstant() : v);
+        updatedContent.replaceAll((k, v) -> v instanceof Date dateValue ? (dateValue).toInstant() : v);
         return updatedContent;
     }
     public Date parseDate(String dateString) {

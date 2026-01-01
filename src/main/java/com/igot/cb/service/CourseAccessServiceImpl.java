@@ -135,10 +135,11 @@ public class CourseAccessServiceImpl {
             if (retrieveUserCourses(userProfile, userCourses)) {
                 log.info("AccessSettingRule evalution: UserId: {} courses retrieved: {}", userId, userCourses.size());
                 if (!userCourses.isEmpty()) {
-                    log.info("No courses found for user profile: {}", userProfile);
+                    log.info("Courses found for user profile: {}", userProfile);
                     try {
                         redisCacheMgr.putInCache(Constants.ACCESS_KEY+userId, mapper.writeValueAsString(userCourses));
                     } catch (JsonProcessingException e) {
+                        log.error("Failed to cache courses for user {}: {}", userId, e.getMessage());
                         throw e;
                     }
                 } else {

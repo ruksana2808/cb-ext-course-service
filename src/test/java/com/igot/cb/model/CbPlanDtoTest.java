@@ -53,7 +53,7 @@ class CbPlanDtoTest {
         assertNull(dto.getOrgScope());
         assertNull(dto.getContextData());
         assertNull(dto.getEndDate());
-        assertNull(dto.getIsApar());
+        assertFalse(dto.getIsApar());
         assertNull(dto.getOrgIdList());
     }
 
@@ -65,6 +65,6 @@ class CbPlanDtoTest {
         assertFalse(dto.getIsApar());
         
         dto.setIsApar(null);
-        assertNull(dto.getIsApar());
+        assertFalse(dto.getIsApar());
     }
 }
