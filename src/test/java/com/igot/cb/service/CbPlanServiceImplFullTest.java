@@ -24,7 +24,7 @@ import org.mockito.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
-public class CbPlanServiceImplFullTest {
+class CbPlanServiceImplFullTest {
 
         @Mock
         private AccessTokenValidator accessTokenValidator;
