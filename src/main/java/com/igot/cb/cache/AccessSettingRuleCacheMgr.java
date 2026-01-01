@@ -16,7 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Cache manager for access setting rules.
- * It loads access setting rules from Redis or Cassandra and caches them locally.
+ * It loads access setting rules from Redis or Cassandra and caches them
+ * locally.
  */
 @Component
 @Slf4j
@@ -91,10 +92,10 @@ public class AccessSettingRuleCacheMgr {
                         Constants.KEYSPACE_SUNBIRD_COURSE, Constants.ACCESS_SETTINGS_RULES_TABLE_V2, null,
                         null, null);
                 cachedAccessSettingRules = accessSettingRuleMapList.stream()
-                        .map(record -> new CachedAccessSettingRule(
-                                (String) record.get("contextId"),
-                                (String) record.get("contextIdType"),
-                                (String) record.get("contextData"),
+                        .map(accessSettingRuleRecord -> new CachedAccessSettingRule(
+                                (String) accessSettingRuleRecord.get("contextId"),
+                                (String) accessSettingRuleRecord.get("contextIdType"),
+                                (String) accessSettingRuleRecord.get("contextData"),
                                 false))
                         .collect(Collectors.toMap(
                                 CachedAccessSettingRule::getCacheKey,
@@ -130,8 +131,6 @@ public class AccessSettingRuleCacheMgr {
         }
     }
 
-
-
     @SuppressWarnings("unchecked")
     private void processContextData(String cacheKey, Map<String, Object> contextData) {
         Map<String, Object> accessControl = (Map<String, Object>) contextData.get(Constants.ACCESS_CONTROL_ID);
@@ -140,8 +139,7 @@ public class AccessSettingRuleCacheMgr {
             return;
         }
 
-        List<Map<String, Object>> userGroups =
-                (List<Map<String, Object>>) accessControl.get(Constants.USER_GROUPS);
+        List<Map<String, Object>> userGroups = (List<Map<String, Object>>) accessControl.get(Constants.USER_GROUPS);
         if (userGroups == null || userGroups.isEmpty()) {
             log.warn("No userGroups found for rule: {}", cacheKey);
             return;
@@ -151,8 +149,8 @@ public class AccessSettingRuleCacheMgr {
             String userGroupId = (String) userGroup.get(Constants.USER_GROUP_ID);
             String userGroupName = (String) userGroup.get(Constants.USER_GROUP_NAME);
 
-            List<Map<String, Object>> criteriaList =
-                    (List<Map<String, Object>>) userGroup.get(Constants.USER_GROUP_CRITERIA_LIST);
+            List<Map<String, Object>> criteriaList = (List<Map<String, Object>>) userGroup
+                    .get(Constants.USER_GROUP_CRITERIA_LIST);
             if (criteriaList == null || criteriaList.isEmpty()) {
                 log.warn("No userGroupCriteriaList for userGroupId {} in rule {}", userGroupId, cacheKey);
                 continue;
@@ -177,7 +175,8 @@ public class AccessSettingRuleCacheMgr {
                             try {
                                 return Integer.parseInt(val);
                             } catch (NumberFormatException e) {
-                                log.warn("Non-integer criteria value '{}' for key {} in rule {}", val, criteriaKey, cacheKey);
+                                log.warn("Non-integer criteria value '{}' for key {} in rule {}", val, criteriaKey,
+                                        cacheKey);
                                 return null;
                             }
                         })
@@ -192,8 +191,6 @@ public class AccessSettingRuleCacheMgr {
         }
     }
 
-
-
     BitSet createBitSetForAttribute(Collection<Integer> attributeValues) {
         BitSet bitSet = new BitSet();
         for (Integer part : attributeValues) {
@@ -206,7 +203,6 @@ public class AccessSettingRuleCacheMgr {
         }
         return bitSet;
     }
-
 
     public CachedAccessSettingRule getOrLoadAccessSettingRule(String courseId, String contextId) {
 
@@ -230,8 +226,7 @@ public class AccessSettingRuleCacheMgr {
                     Constants.ACCESS_SETTINGS_RULES_TABLE_V2,
                     filter,
                     null,
-                    null
-            );
+                    null);
             if (CollectionUtils.isEmpty(records)) {
                 log.warn("No access setting rule found in Cassandra for key: {}", cacheKey);
                 return null;
@@ -241,8 +236,7 @@ public class AccessSettingRuleCacheMgr {
                     (String) r.get(Constants.CONTEXT_ID_KEY),
                     (String) r.get(Constants.CONTEXT_ID_TYPE),
                     (String) r.get(Constants.CONTEXT_DATA_KEY),
-                    false
-            );
+                    false);
             try {
                 Map<String, Object> contextData = loadedRule.getContextData();
                 if (MapUtils.isNotEmpty(contextData)) {
