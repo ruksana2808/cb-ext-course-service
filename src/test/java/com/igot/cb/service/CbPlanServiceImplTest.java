@@ -13,7 +13,7 @@ import java.util.*;
 import com.igot.cb.util.*;
 
 import org.igot.common.ApiResponse;
-import org.igot.common.CustomException;
+
 import org.igot.common.auth.AccessTokenValidator;
 import org.igot.common.cassandra.CassandraOperation;
 import org.junit.jupiter.api.BeforeEach;
@@ -277,7 +277,7 @@ class CbPlanServiceImplTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void testSearchCbPlan_WithResults() throws Exception {
+    void testSearchCbPlan_WithResults() {
         SearchCriteria criteria = new SearchCriteria();
         criteria.setQuery(new HashMap<>());
         criteria.setFilter(new HashMap<>());
