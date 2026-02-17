@@ -295,6 +295,20 @@ public class CourseAccessServiceImpl {
                     List<String> fieldsToFetch = Arrays.asList(contentReadFields.split(","));
                     Map<String, Object> contentDetails =
                             contentService.readContent(rule.getContextId(), fieldsToFetch);
+                    // --- Begin custom logic for courseUnits ---
+                    if (contentDetails != null &&
+                            Constants.COURSE_CATEGORY_COMPREHENSIVE_ASSESSMENT_PROGRAM.equals(contentDetails.get(Constants.COURSE_CATEGORY)) &&
+                            contentDetails.get(Constants.CHILD_NODES) instanceof List &&
+                            contentDetails.get(Constants.LEAF_NODES) instanceof List) {
+                        List<String> childNodes = (List<String>) contentDetails.get(Constants.CHILD_NODES);
+                        List<String> leafNodes = (List<String>) contentDetails.get(Constants.LEAF_NODES);
+                        Set<String> leafSet = new HashSet<>(leafNodes);
+                        List<String> courseUnits = childNodes.stream()
+                                .filter(child -> !leafSet.contains(child))
+                                .collect(Collectors.toList());
+                        contentDetails.put(Constants.COURSE_UNITS, courseUnits);
+}
+                    // --- End custom logic for courseUnits ---
                     userCourses.add(contentDetails);
                 }
             }
