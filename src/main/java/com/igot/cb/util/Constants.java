@@ -544,6 +544,53 @@ public class Constants {
     public static final String LEAF_NODES = "leafNodes";
     public static final String COURSE_UNITS = "courseUnits";
 
+    public static final String API_EXTERNAL_TRAINING_USER_BULK_UPLOAD = "api.externaltraining.user.bulkupload";
+    public static final String API_EXTERNAL_TRAINING_USER_BULK_UPLOAD_STATUS = "api.externaltraining.user.bulkupload.status";
+    public static final String API_FILE_UPLOAD = "api.file.upload";
+    public static final String API_FILE_DOWNLOAD = "api.file.download";
+    public static final String FILE_NAME = "fileName";
+    public static final String FILE_PATH = "filePath";
+    public static final String CONTEXT_ID_CAMEL = "contextId";
+    public static final String INITIATED = "INITIATED";
+    public static final String EVENT_ID = "eventId";
+    public static final String EVENT_BATCH_TABLE = "event_batch";
+    public static final String TOTAL_RECORDS = "totalRecords";
+    public static final String SUCCESSFUL_RECORDS_COUNT = "successfulRecordsCount";
+    public static final String FAILED_RECORDS_COUNT = "failedRecordsCount";
+    public static final String SUCCESSFUL_UPPERCASE = "SUCCESSFUL";
+    public static final String FAILED_UPPERCASE = "FAILED";
+    public static final String STATUS_IN_PROGRESS_UPPERCASE = "IN-PROGRESS";
+    public static final String LOCAL_BASE_PATH= "/tmp/";
+    public static final String ENROLLED_DATE_KEY_LOWER = "enrolled_date";
+    public static final String DATE_TIME = "dateTime";
+    public static final String EVENT_BATCH_TABLE_NAME = "event_batch";
+    public static final String COMPLETED_ON ="completedOn";
+    public static final String START_DATE_COLUMN = "start_date";
+    public static final String END_DATE_COLUMN = "end_date";
+    public static final String BATCH_ATTRIBUTES_COLUMN="batch_attributes";
+    public static final String LRC_PROGRESS_DETAILS_COLUMN="lrc_progressdetails";
+    public static final String START_DATE = "startDate";
+    public static final String UPDATE_ON = "updatedOn";
+    public static final String START_TIME_KEY = "startTime";
+    public static final String END_TIME_KEY = "endTime";
+    public static final String END_DATE_CAMEL = "endDate";
+    // Competency Service Constants
+    public static final String USER_COMPETENCY_MAPPING_TABLE = "user_competency_mapping";
+    public static final String COMPETENCY_ACQUIRED_EVENT = "COMPETENCY_ACQUIRED";
+    public static final String E_DATA = "edata";
+    public static final String EVENT_TYPE = "eventType";
+    public static final String API_FETCH_USER_COMPETENCY = "api.fetch.user.competency";
+    public static final String IS_FIRST_TIME_USER = "isFirstTimeUser";
+    public static final String COMPETENCIES = "competencies";
+    public static final String USER_COMPETENCY_REDIS_KEY_PREFIX = "user_competency_";
+    public static final String EVENT_READ_END_POINT = "event.read.endpoint";
+    public static final String EVENT = "event";
+    public static final String EVENT_NAME = "eventName";
+    public static final String CERT_TEMPLATE = "certTemplate";
+    public static final String TEMPLATE_ID = "templateId";
+    public static final String SOURCE_NAME = "sourceName";
+    public static final String ISSUED_DATE = "issuedDate";
+
     private Constants() {
     }
 }
