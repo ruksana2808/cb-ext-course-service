@@ -178,7 +178,9 @@ public class UserAndOrgServiceImpl {
                     putIfNotNullOrEmpty(userProfile, Constants.BATCH, String.valueOf(cadreDetails.get(Constants.CADRE_BATCH)));
                 }
                 if (cadreDetails.containsKey(Constants.CENTRAL_DEPUTATION)) {
-                    putIfNotNullOrEmpty(userProfile, Constants.CENTRAL_DEPUTATION, String.valueOf( cadreDetails.get(Constants.CENTRAL_DEPUTATION)));
+                    putIfNotNullOrEmpty(userProfile, Constants.CENTRAL_DEPUTATION, String.valueOf(cadreDetails.get(Constants.CENTRAL_DEPUTATION)));
+                } else {
+                    userProfile.put(Constants.CENTRAL_DEPUTATION, "false");
                 }
             }
             checkUserTaggedUnderRozgarMela(userProfile, profileDetails);
