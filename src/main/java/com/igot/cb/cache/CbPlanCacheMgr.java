@@ -100,7 +100,7 @@ public class CbPlanCacheMgr {
 
     public List<Map<String, Object>> getCbPlanForAllAndOrgId(String orgId, AtomicBoolean isCacheEnabled) {
         List<Map<String, Object>> activeCbPlans = cbPlanCache.getIfPresent(orgId);
-        if (activeCbPlans != null) {
+        if (CollectionUtils.isEmpty(activeCbPlans)) {
             log.info("Cache hit for orgId: {}, Found {} active CB Plans", orgId, activeCbPlans.size());
             activeCbPlans = new ArrayList<>();
             return activeCbPlans;
