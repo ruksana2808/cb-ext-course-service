@@ -3,7 +3,6 @@ package com.igot.cb.cache;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -11,12 +10,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.expression.spel.ast.BooleanLiteral;
 import org.springframework.stereotype.Component;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -24,6 +19,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.util.Constants;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -36,19 +32,27 @@ public class CbPlanCacheMgr {
     @Value("${cb.plan.batch.size:5}") //default fallback to 5 if missing
     private int planBatchSize;
 
+    @Value("${cb.plan.caffine.cache.max.size:5000}")
+    private int maxCacheSize;
+
     private final CassandraOperation cassandraOperation;
     private Cache<String, List<Map<String, Object>>> cbPlanCache;
 
-    public CbPlanCacheMgr(CassandraOperation cassandraOperation) {
-        this.cassandraOperation = cassandraOperation;
+    @PostConstruct
+    public void initCache() {
         this.cbPlanCache = Caffeine.newBuilder()
-                .maximumSize(1000)
+                .maximumSize(maxCacheSize)
                 .expireAfterWrite(Duration.ofMinutes(ttlMinutes))
                 .build();
     }
+    
+    public CbPlanCacheMgr(CassandraOperation cassandraOperation) {
+        this.cassandraOperation = cassandraOperation;
+    }
 
     private List<Map<String, Object>> getCbPlanForAll() {
-        List<Map<String, Object>> allCbPlanList = cbPlanCache.getIfPresent("all-lookup");
+        String redisCacheKey = "all-lookup";
+        List<Map<String, Object>> allCbPlanList = cbPlanCache.getIfPresent(redisCacheKey);
         if (allCbPlanList == null) {
             log.info("No CB Plans for all orgs in Cache, reading from Cassandra");
             Map<String, Object> propertiesMap = new HashMap<>();
@@ -64,7 +68,7 @@ public class CbPlanCacheMgr {
             }
             allCbPlanList = allCbPlanList.stream()
                     .filter(plan -> Boolean.TRUE.equals(plan.get(Constants.IS_ACTIVE))).collect(Collectors.toList());
-            cbPlanCache.put("all", allCbPlanList);
+            cbPlanCache.put(redisCacheKey, allCbPlanList);
         } else {
             log.info("Cache hit for all orgs: Found {} records", allCbPlanList.size());
         }
@@ -72,7 +76,8 @@ public class CbPlanCacheMgr {
     }
 
     private List<Map<String, Object>> getCbPlanForOrgId(String orgId) {
-        List<Map<String, Object>> cbPlanList = cbPlanCache.getIfPresent(orgId + "-lookup");
+        String redisCacheKey = orgId + "-lookup";
+        List<Map<String, Object>> cbPlanList = cbPlanCache.getIfPresent(redisCacheKey);
         
         if (cbPlanList == null) {
             log.info("No CB Plans for orgId in Cache: {}, reading from Cassandra", orgId);
@@ -89,7 +94,7 @@ public class CbPlanCacheMgr {
             }
             cbPlanList = cbPlanList.stream()
                     .filter(plan -> Boolean.TRUE.equals(plan.get(Constants.IS_ACTIVE))).collect(Collectors.toList());
-            cbPlanCache.put(orgId + "-lookup", cbPlanList);
+            cbPlanCache.put(redisCacheKey, cbPlanList);
             cbPlanList.addAll(getCbPlanForAll());
         } else {
             log.info("Cache hit for orgId: {}, Found {} records", orgId, cbPlanList.size());
@@ -100,9 +105,8 @@ public class CbPlanCacheMgr {
 
     public List<Map<String, Object>> getCbPlanForAllAndOrgId(String orgId, AtomicBoolean isCacheEnabled) {
         List<Map<String, Object>> activeCbPlans = cbPlanCache.getIfPresent(orgId);
-        if (CollectionUtils.isEmpty(activeCbPlans)) {
+        if (CollectionUtils.isNotEmpty(activeCbPlans)) {
             log.info("Cache hit for orgId: {}, Found {} active CB Plans", orgId, activeCbPlans.size());
-            activeCbPlans = new ArrayList<>();
             return activeCbPlans;
         }
         List<Map<String, Object>> cbPlanList = getCbPlanForOrgId(orgId);
