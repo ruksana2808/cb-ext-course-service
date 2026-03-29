@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cassandra.CassandraOperation;
 import jakarta.annotation.PostConstruct;
 import org.apache.commons.collections.CollectionUtils;
@@ -26,6 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class AccessSettingRuleCacheMgr {
+    private static final String ACCESS_SETTINGS_CACHE_KEY = "accessSettingRules";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private final RedisCacheMgr redisCacheMgr;
     private final CassandraOperation cassandraOperation;
     private Map<String, CachedAccessSettingRule> cachedAccessSettingRules = new ConcurrentHashMap<>();
@@ -35,10 +39,14 @@ public class AccessSettingRuleCacheMgr {
 
     private final long LOCAL_CACHE_TTL = 3600000;
 
-    private final String ACCESS_SETTINGS_CACHE_KEY = "accessSettingRules";
-
     @Value("${access.rule.ttl.minutes}")
     private int ttlMinutes;
+
+    @Value("${access.settings.cache.batch.size:500}")
+    private int accessSettingsCacheBatchSize = 500;
+
+    @Value("${access.settings.cache.max.query.size:5000}")
+    private int accessSettingsCacheMaxQuerySize = 5000;
 
     @PostConstruct
     public void initCache() {
@@ -93,6 +101,37 @@ public class AccessSettingRuleCacheMgr {
         return cachedAccessSettingRules.values();
     }
 
+    public void refreshRuleCache(String contextId, String contextIdType, String contextDataJson, boolean archived) {
+        String cacheKey = buildCacheKey(contextId, contextIdType);
+        if (archived || contextDataJson == null || contextDataJson.isBlank()) {
+            cachedAccessSettingRules.remove(cacheKey);
+            redisCacheMgr.deleteHashField(ACCESS_SETTINGS_CACHE_KEY, cacheKey);
+            accessSettingsCache.invalidate(cacheKey);
+            return;
+        }
+
+        CachedAccessSettingRule rule = new CachedAccessSettingRule(contextId, contextIdType, contextDataJson, false);
+        try {
+            Map<String, Object> contextData = rule.getContextData();
+            if (MapUtils.isNotEmpty(contextData)) {
+                processContextData(cacheKey, contextData);
+            }
+            redisCacheMgr.setHashValue(ACCESS_SETTINGS_CACHE_KEY, cacheKey,
+                    buildRedisRulePayload(contextId, contextIdType, contextData));
+            cachedAccessSettingRules.put(cacheKey, rule);
+            accessSettingsCache.put(cacheKey, rule);
+        } catch (Exception e) {
+            log.error("Failed to refresh access setting rule cache for key: {}", cacheKey, e);
+        }
+    }
+
+    public void invalidateAll() {
+        cachedAccessSettingRules = new ConcurrentHashMap<>();
+        if (accessSettingsCache != null) {
+            accessSettingsCache.invalidateAll();
+        }
+    }
+
     /**
      * Retrieves a specific cached access setting rule by its context ID.
      *
@@ -104,52 +143,112 @@ public class AccessSettingRuleCacheMgr {
         try {
             Map<String, String> cachedRules = redisCacheMgr.getAllCachedAccessRules(ACCESS_SETTINGS_CACHE_KEY);
             if (MapUtils.isNotEmpty(cachedRules)) {
-                cachedAccessSettingRules = cachedRules.entrySet().stream()
-                        .collect(Collectors.toMap(
-                                Map.Entry::getKey,
-                                entry -> new CachedAccessSettingRule(entry.getValue())));
-            } else {
-                List<Map<String, Object>> accessSettingRuleMapList = cassandraOperation.getRecordsByProperties(
-                        Constants.KEYSPACE_SUNBIRD_COURSE, Constants.ACCESS_SETTINGS_RULES_TABLE_V2, null,
-                        null, null);
-                cachedAccessSettingRules = accessSettingRuleMapList.stream()
-                        .map(record -> new CachedAccessSettingRule(
-                                (String) record.get("contextId"),
-                                (String) record.get("contextIdType"),
-                                (String) record.get("contextData"),
-                                false))
-                        .collect(Collectors.toMap(
-                                CachedAccessSettingRule::getCacheKey,
-                                rule -> rule));
-                // Cache the rules in Redis
-                for (CachedAccessSettingRule rule : cachedAccessSettingRules.values()) {
-
+                Map<String, CachedAccessSettingRule> redisLoadedRules = new ConcurrentHashMap<>();
+                for (Map.Entry<String, String> entry : cachedRules.entrySet()) {
                     try {
-
+                        CachedAccessSettingRule rule = new CachedAccessSettingRule(entry.getValue());
                         Map<String, Object> contextData = rule.getContextData();
-                        if (contextData == null) {
-                            log.warn("No contextData found for rule: {}", rule.getCacheKey());
-                            continue;
+                        if (MapUtils.isNotEmpty(contextData)) {
+                            processContextData(rule.getCacheKey(), contextData);
                         }
-
-                        // Call the new method for processing
-                        processContextData(rule.getCacheKey(), contextData);
-                        cachedAccessSettingRules.put(rule.getCacheKey(), rule);
-
-                        // Finally, push the raw contextData to Redis
-                        redisCacheMgr.setAccessSettingRuleCache(ACCESS_SETTINGS_CACHE_KEY, rule.getCacheKey(),
-                                contextData);
-
+                        redisLoadedRules.put(entry.getKey(), rule);
                     } catch (Exception e) {
-                        log.error("Error processing rule {}", rule.getCacheKey(), e);
+                        log.error("Failed to parse/process access setting rule from Redis key: {}", entry.getKey(), e);
                     }
                 }
+                cachedAccessSettingRules = redisLoadedRules;
+            } else {
+                Map<String, CachedAccessSettingRule> cassandraLoadedRules = new ConcurrentHashMap<>();
+                int totalFetched = cassandraOperation.forEachRecordByPropertiesPaged(
+                        Constants.KEYSPACE_SUNBIRD_COURSE,
+                        Constants.ACCESS_SETTINGS_RULES_TABLE_V2,
+                        null,
+                        null,
+                        accessSettingsCacheBatchSize,
+                        accessSettingsCacheMaxQuerySize,
+                        record -> {
+                            try {
+                                CachedAccessSettingRule rule = new CachedAccessSettingRule(
+                                        (String) record.get("contextId"),
+                                        (String) record.get("contextIdType"),
+                                        (String) record.get("contextData"),
+                                        false);
+                                Map<String, Object> contextData = rule.getContextData();
+                                if (contextData == null) {
+                                    log.warn("No contextData found for rule: {}", rule.getCacheKey());
+                                    return;
+                                }
+                                processContextData(rule.getCacheKey(), contextData);
+                                cassandraLoadedRules.put(rule.getCacheKey(), rule);
+                                redisCacheMgr.setHashValue(ACCESS_SETTINGS_CACHE_KEY, rule.getCacheKey(),
+                                        buildRedisRulePayload(rule.getContextId(), rule.getContextIdType(), contextData));
+                            } catch (Exception e) {
+                                log.error("Error processing access setting rule record from Cassandra", e);
+                            }
+                        }
+                );
+                if (totalFetched >= accessSettingsCacheMaxQuerySize) {
+                    log.warn("Reached access settings max query size limit: {}. " +
+                                    "Consider increasing access.settings.cache.max.query.size",
+                            accessSettingsCacheMaxQuerySize);
+                }
+                cachedAccessSettingRules = cassandraLoadedRules;
             }
             log.info("Access setting rules loaded into cache successfully. Number of rules loaded: {}",
                     cachedAccessSettingRules.size());
         } catch (Exception e) {
             log.error("Failed to load AccessSettingRule into Cache. Exception: ", e);
         }
+    }
+
+    private String buildCacheKey(String contextId, String contextIdType) {
+        return contextId + "|" + contextIdType;
+    }
+
+    private String buildRedisRulePayload(String contextId, String contextIdType, Map<String, Object> contextData) {
+        try {
+            Map<String, Object> rulePayload = new HashMap<>();
+            rulePayload.put(Constants.CONTEXT_ID, contextId);
+            rulePayload.put(Constants.CONTEXT_ID_TYPE, contextIdType);
+            rulePayload.put(Constants.CONTEXT_DATA, sanitizeContextDataForRedis(contextData));
+            rulePayload.put(Constants.IS_ARCHIVED, false);
+            return OBJECT_MAPPER.writeValueAsString(rulePayload);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize access setting rule for Redis", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> sanitizeContextDataForRedis(Map<String, Object> contextData) {
+        Map<String, Object> sanitized = OBJECT_MAPPER.convertValue(contextData, Map.class);
+        Object accessControlObj = sanitized.get(Constants.ACCESS_CONTROL_ID);
+        if (!(accessControlObj instanceof Map<?, ?> accessControl)) {
+            return sanitized;
+        }
+        Object userGroupsObj = accessControl.get(Constants.USER_GROUPS);
+        if (!(userGroupsObj instanceof List<?> userGroups)) {
+            return sanitized;
+        }
+        for (Object userGroupObj : userGroups) {
+            if (!(userGroupObj instanceof Map<?, ?> userGroup)) {
+                continue;
+            }
+            Object criteriaListObj = userGroup.get(Constants.USER_GROUP_CRITERIA_LIST);
+            if (!(criteriaListObj instanceof List<?> criteriaList)) {
+                continue;
+            }
+            for (Object criteriaObj : criteriaList) {
+                if (!(criteriaObj instanceof Map<?, ?> criteriaMap)) {
+                    continue;
+                }
+                Object valueObj = criteriaMap.get(Constants.CRITERIA_VALUE);
+                if (valueObj instanceof BitSet bitSet) {
+                    List<Integer> bitSetValues = bitSet.stream().boxed().collect(Collectors.toList());
+                    ((Map<String, Object>) criteriaMap).put(Constants.CRITERIA_VALUE, bitSetValues);
+                }
+            }
+        }
+        return sanitized;
     }
 
 
@@ -182,7 +281,15 @@ public class AccessSettingRuleCacheMgr {
 
             for (Map<String, Object> criteria : criteriaList) {
                 String criteriaKey = (String) criteria.get(Constants.CRITERIA_KEY);
-                List<?> criteriaValues = (List<?>) criteria.get(Constants.CRITERIA_VALUE);
+                Object criteriaValuesObj = criteria.get(Constants.CRITERIA_VALUE);
+                if (criteriaValuesObj instanceof BitSet) {
+                    continue;
+                }
+                if (!(criteriaValuesObj instanceof List<?> criteriaValues)) {
+                    log.warn("Invalid criteria values type {} for key {} in rule {}",
+                            criteriaValuesObj == null ? "null" : criteriaValuesObj.getClass().getName(), criteriaKey, cacheKey);
+                    continue;
+                }
 
                 if (criteriaKey == null || criteriaValues == null) {
                     log.warn("Missing key or values in criteria for userGroupId {} in rule {}", userGroupId, cacheKey);

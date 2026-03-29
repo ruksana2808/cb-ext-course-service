@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.model.CachedAccessSettingRule;
@@ -23,6 +24,9 @@ class PromotionalContentRuleCacheMgrTest {
     private CassandraOperation cassandraOperation;
 
     @Mock
+    private RedisCacheMgr redisCacheMgr;
+
+    @Mock
     private CbExtServerProperties properties;
 
     private PromotionalContentRuleCacheMgr cacheMgr;
@@ -33,18 +37,15 @@ class PromotionalContentRuleCacheMgrTest {
         lenient().when(properties.isPromotionalContentCacheWarmingEnabled()).thenReturn(false);
         lenient().when(properties.getPromotionalContentCacheBatchSize()).thenReturn(500);
         lenient().when(properties.getPromotionalContentCacheMaxQuerySize()).thenReturn(5000);
-        cacheMgr = new PromotionalContentRuleCacheMgr(cassandraOperation, properties);
+        cacheMgr = new PromotionalContentRuleCacheMgr(redisCacheMgr, cassandraOperation, properties);
         ReflectionTestUtils.setField(cacheMgr, "promotionalContentRulesCacheExpiryMs", 3600000);
     }
 
     @Test
     void testGetAccessSettingRules_EmptyCache_LoadsFromCassandra() {
         List<Map<String, Object>> cassandraRecords = createCassandraRecords(3);
-        when(cassandraOperation.getRecordsByProperties(
-                Constants.KEYSPACE_SUNBIRD_COURSE,
-                Constants.PROMOTIONAL_CONTENT_RULES,
-                null, null, 500
-        )).thenReturn(cassandraRecords);
+        mockPagedRecords(cassandraRecords);
+        when(redisCacheMgr.getAllCachedAccessRules(anyString())).thenReturn(Map.of());
         Collection<CachedAccessSettingRule> result = cacheMgr.getAccessSettingRules();
         assertNotNull(result);
         assertEquals(3, result.size());
@@ -52,9 +53,8 @@ class PromotionalContentRuleCacheMgrTest {
 
     @Test
     void testGetAccessSettingRules_ReturnsEmptyCollection_WhenNoDataAvailable() {
-        when(cassandraOperation.getRecordsByProperties(
-                anyString(), anyString(), any(), any(), anyInt()
-        )).thenReturn(List.of());
+        mockPagedRecords(List.of());
+        when(redisCacheMgr.getAllCachedAccessRules(anyString())).thenReturn(Map.of());
         Collection<CachedAccessSettingRule> result = cacheMgr.getAccessSettingRules();
         assertNotNull(result);
         assertTrue(result.isEmpty());
@@ -63,24 +63,24 @@ class PromotionalContentRuleCacheMgrTest {
     @Test
     void testGetAccessSettingRules_ReturnsCachedData_OnSubsequentCalls() {
         List<Map<String, Object>> cassandraRecords = createCassandraRecords(2);
-        when(cassandraOperation.getRecordsByProperties(
-                anyString(), anyString(), any(), any(), anyInt()
-        )).thenReturn(cassandraRecords);
+        mockPagedRecords(cassandraRecords);
+        when(redisCacheMgr.getAllCachedAccessRules(anyString())).thenReturn(Map.of());
         Collection<CachedAccessSettingRule> result1 = cacheMgr.getAccessSettingRules();
         assertEquals(2, result1.size());
         reset(cassandraOperation);
         Collection<CachedAccessSettingRule> result2 = cacheMgr.getAccessSettingRules();
         assertEquals(2, result2.size());
-        verify(cassandraOperation, never()).getRecordsByProperties(
-                anyString(), anyString(), any(), any(), anyInt()
+        verify(cassandraOperation, never()).forEachRecordByPropertiesPaged(
+                anyString(), anyString(), any(), any(), anyInt(), anyInt(), any()
         );
     }
 
     @Test
     void testLoadAccessSettingRules_HandlesException() {
-        when(cassandraOperation.getRecordsByProperties(
-                anyString(), anyString(), any(), any(), anyInt()
-        )).thenThrow(new RuntimeException("Database error"));
+        doThrow(new RuntimeException("Database error"))
+                .when(cassandraOperation)
+                .forEachRecordByPropertiesPaged(anyString(), anyString(), any(), any(), anyInt(), anyInt(), any());
+        when(redisCacheMgr.getAllCachedAccessRules(anyString())).thenReturn(Map.of());
         Collection<CachedAccessSettingRule> result = cacheMgr.getAccessSettingRules();
         assertNotNull(result);
         assertTrue(result.isEmpty());
@@ -91,9 +91,8 @@ class PromotionalContentRuleCacheMgrTest {
         List<Map<String, Object>> cassandraRecords = List.of(
                 createCassandraRecordWithFullData("do_test_123", "Course")
         );
-        when(cassandraOperation.getRecordsByProperties(
-                anyString(), anyString(), any(), any(), anyInt()
-        )).thenReturn(cassandraRecords);
+        mockPagedRecords(cassandraRecords);
+        when(redisCacheMgr.getAllCachedAccessRules(anyString())).thenReturn(Map.of());
         Collection<CachedAccessSettingRule> result = cacheMgr.getAccessSettingRules();
         assertEquals(1, result.size());
         CachedAccessSettingRule rule = result.iterator().next();
@@ -116,9 +115,8 @@ class PromotionalContentRuleCacheMgrTest {
     void testProcessCriteria_WithNonIntegerValues() {
         String contextData = "{\"accessControlId\":{\"version\":1,\"userGroups\":[{\"userGroupId\":\"group-1\",\"userGroupName\":\"Group 1\",\"userGroupCriteriaList\":[{\"criteriaKey\":\"designation\",\"criteriaValue\":[\"1\",\"invalid\",\"3\",\"not-a-number\",\"5\"]}]}]}}";
         Map<String, Object> nonIntegerRecord = createCassandraRecord("do_non_integer", "Course", contextData);
-        when(cassandraOperation.getRecordsByProperties(
-                anyString(), anyString(), any(), any(), anyInt()
-        )).thenReturn(List.of(nonIntegerRecord));
+        mockPagedRecords(List.of(nonIntegerRecord));
+        when(redisCacheMgr.getAllCachedAccessRules(anyString())).thenReturn(Map.of());
         Collection<CachedAccessSettingRule> result = cacheMgr.getAccessSettingRules();
         assertEquals(1, result.size());
         CachedAccessSettingRule rule = result.iterator().next();
@@ -138,9 +136,8 @@ class PromotionalContentRuleCacheMgrTest {
     @Test
     void testProcessContextData_WithNoAccessControl() {
         Map<String, Object> noAccessControlRecord = createCassandraRecord("do_no_access", "Course", "{}");
-        when(cassandraOperation.getRecordsByProperties(
-                anyString(), anyString(), any(), any(), anyInt()
-        )).thenReturn(List.of(noAccessControlRecord));
+        mockPagedRecords(List.of(noAccessControlRecord));
+        when(redisCacheMgr.getAllCachedAccessRules(anyString())).thenReturn(Map.of());
         Collection<CachedAccessSettingRule> result = cacheMgr.getAccessSettingRules();
         assertEquals(1, result.size());
     }
@@ -195,5 +192,16 @@ class PromotionalContentRuleCacheMgrTest {
     private Map<String, Object> createCassandraRecordWithFullData(String contextId, String contextIdType) {
         String contextData = "{\"accessControlId\":{\"version\":1,\"userGroups\":[{\"userGroupId\":\"group-1\",\"userGroupName\":\"Group 1\",\"userGroupCriteriaList\":[{\"criteriaKey\":\"designation\",\"criteriaValue\":[\"1\",\"2\",\"3\"]}]}]}}";
         return createCassandraRecord(contextId, contextIdType, contextData);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void mockPagedRecords(List<Map<String, Object>> records) {
+        doAnswer(invocation -> {
+            Consumer<Map<String, Object>> consumer = invocation.getArgument(6);
+            records.forEach(consumer);
+            return records.size();
+        }).when(cassandraOperation).forEachRecordByPropertiesPaged(
+                anyString(), anyString(), any(), any(), anyInt(), anyInt(), any()
+        );
     }
 }

@@ -112,6 +112,11 @@ public class PromotionalContentServiceImpl implements IPromotionalContentService
         if (accessSettingMigrationService.processAccessSettingRule(accessRuleData)) {
             cassandraOperation.insertRecord(Constants.KEYSPACE_SUNBIRD_COURSE,
                     Constants.PROMOTIONAL_CONTENT_RULES, accessRuleData);
+            promotionalContentRuleCacheMgr.refreshRuleCache(
+                    String.valueOf(accessRuleData.get(Constants.CONTEXT_ID)),
+                    String.valueOf(accessRuleData.get(Constants.CONTEXT_ID_TYPE)),
+                    String.valueOf(accessRuleData.get(Constants.CONTEXT_DATA)),
+                    false);
             response.getResult().put(Constants.MSG, Constants.PROMOTIONAL_CONTENT_CREATED_RULES);
             Map<String, Object> payload = new HashMap<>();
             payload.put(Constants.ACCESS_CONTROL, createPayloadWithUuid.get(Constants.ACCESS_CONTROL));
@@ -333,6 +338,7 @@ public class PromotionalContentServiceImpl implements IPromotionalContentService
             accessRuleData.put(Constants.CONTEXT_ID_TYPE, contextIdType);
             cassandraOperation.insertRecord(Constants.KEYSPACE_SUNBIRD_COURSE,
                     Constants.PROMOTIONAL_CONTENT_RULES, accessRuleData);
+            promotionalContentRuleCacheMgr.refreshRuleCache(contentId, contextIdType, "", true);
             response.setResponseCode(HttpStatus.OK);
             response.getResult().put(Constants.MSG, "Promotional Content Metadata deleted successfully");
             return response;

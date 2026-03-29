@@ -1,5 +1,6 @@
 package com.igot.cb.cache;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.model.CachedAccessSettingRule;
 import com.igot.cb.util.CbExtServerProperties;
@@ -22,7 +23,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @Slf4j
 public class PromotionalContentRuleCacheMgr {
+    private static final String PROMOTIONAL_CONTENT_CACHE_KEY = "promotionalContentRules";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    private final RedisCacheMgr redisCacheMgr;
     private final CassandraOperation cassandraOperation;
     private final CbExtServerProperties properties;
     Map<String, CachedAccessSettingRule> cacheMap = new ConcurrentHashMap<>();
@@ -31,8 +35,10 @@ public class PromotionalContentRuleCacheMgr {
     /**
      * Constructs the cache manager with required dependencies.
      */
-    public PromotionalContentRuleCacheMgr(CassandraOperation cassandraOperation,
+    public PromotionalContentRuleCacheMgr(RedisCacheMgr redisCacheMgr,
+                                          CassandraOperation cassandraOperation,
                                           CbExtServerProperties properties) {
+        this.redisCacheMgr = redisCacheMgr;
         this.cassandraOperation = cassandraOperation;
         this.properties = properties;
     }
@@ -85,68 +91,63 @@ public class PromotionalContentRuleCacheMgr {
         int batchSize = properties.getPromotionalContentCacheBatchSize();
         int maxQuerySize = properties.getPromotionalContentCacheMaxQuerySize();
 
-        log.info("Loading access setting rules from database - Batch size: {}, Max query size: {}",
+        log.info("Loading promotional content rules from Redis or database - Batch size: {}, Max query size: {}",
                 batchSize, maxQuerySize);
         cacheMap.clear();
         try {
-            List<Map<String, Object>> allRecords = new ArrayList<>();
-            int totalFetched = 0;
-            int pageNumber = 1;
-            boolean hasMoreRecords = true;
-            while (hasMoreRecords && totalFetched < maxQuerySize) {
-                log.info("Fetching page {} with batch size {}", pageNumber, batchSize);
-                List<Map<String, Object>> pageRecords = cassandraOperation.getRecordsByProperties(
-                        Constants.KEYSPACE_SUNBIRD_COURSE,
-                        Constants.PROMOTIONAL_CONTENT_RULES,
-                        null,
-                        null,
-                        batchSize);
-                if (CollectionUtils.isEmpty(pageRecords)) {
-                    log.info("No more records found on page {}", pageNumber);
-                    hasMoreRecords = false;
-                } else {
-                    allRecords.addAll(pageRecords);
-                    totalFetched += pageRecords.size();
-                    log.info("Fetched {} records on page {}, total so far: {}",
-                            pageRecords.size(), pageNumber, totalFetched);
-
-                    if (pageRecords.size() < batchSize) {
-                        log.info("Received fewer records than batch size. Pagination complete.");
-                        hasMoreRecords = false;
-                    } else {
-                        pageNumber++;
-                        hasMoreRecords = false;
-                        log.warn("Cassandra query returned full batch size. There may be more records, " +
-                                "but pagination token is not supported. Consider increasing batch size.");
+            Map<String, String> cachedRules = redisCacheMgr.getAllCachedAccessRules(PROMOTIONAL_CONTENT_CACHE_KEY);
+            if (MapUtils.isNotEmpty(cachedRules)) {
+                cachedRules.forEach((cacheKey, jsonValue) -> {
+                    try {
+                        CachedAccessSettingRule rule = new CachedAccessSettingRule(jsonValue);
+                        processAndCacheRule(rule);
+                        cacheMap.put(cacheKey, rule);
+                    } catch (Exception e) {
+                        log.error("Failed to load promotional content rule from Redis for key: {}", cacheKey, e);
                     }
-                }
+                });
+                log.info("Promotional content rules loaded from Redis successfully. Total rules loaded: {}",
+                        cacheMap.size());
+                return;
             }
+
+            int totalFetched = cassandraOperation.forEachRecordByPropertiesPaged(
+                    Constants.KEYSPACE_SUNBIRD_COURSE,
+                    Constants.PROMOTIONAL_CONTENT_RULES,
+                    null,
+                    null,
+                    batchSize,
+                    maxQuerySize,
+                    rec -> {
+                        try {
+                            Boolean isArchived = (Boolean) rec.get(Constants.IS_ARCHIVED_KEY);
+                            if (Boolean.TRUE.equals(isArchived)) {
+                                return;
+                            }
+                            CachedAccessSettingRule rule = new CachedAccessSettingRule(
+                                    (String) rec.get("contextId"),
+                                    (String) rec.get("contextIdType"),
+                                    (String) rec.get("contextData"),
+                                    false);
+                            processAndCacheRule(rule);
+                            cacheMap.put(rule.getCacheKey(), rule);
+                            redisCacheMgr.setHashValue(PROMOTIONAL_CONTENT_CACHE_KEY, rule.getCacheKey(),
+                                    buildRedisRulePayload(rule.getContextId(), rule.getContextIdType(), rule.getContextData()));
+                        } catch (Exception e) {
+                            log.error("Error processing promotional content rule record from Cassandra", e);
+                        }
+                    }
+            );
             if (totalFetched >= maxQuerySize) {
                 log.warn("Reached maximum query size limit of {}. There may be more records in the database. " +
                         "Consider increasing promotional.content.cache.max.query.size", maxQuerySize);
             }
-            if (allRecords.isEmpty()) {
+            if (cacheMap.isEmpty()) {
                 log.warn("No access setting rules found in database");
                 return;
             }
-            log.info("Total records fetched: {}, processing with parallel streams...", allRecords.size());
-            allRecords.parallelStream()
-                    .filter(rec -> {
-                        Boolean isArchived = (Boolean) rec.get(Constants.IS_ARCHIVED_KEY);
-                        return !isArchived;
-                    })
-                    .map(rec -> new CachedAccessSettingRule(
-                            (String) rec.get("contextId"),
-                            (String) rec.get("contextIdType"),
-                            (String) rec.get("contextData"),
-                            false))
-                    .forEach(rule -> {
-                        processAndCacheRule(rule);
-                        cacheMap.put(rule.getCacheKey(), rule);
-                    });
-            long totalProcessed = cacheMap.size();
             log.info("Promotional Content rules loaded into cache successfully. Total rules loaded: {}",
-                    totalProcessed);
+                    cacheMap.size());
         } catch (Exception e) {
             log.error("Failed to load Promotional Content rules into Cache. Exception: ", e);
         }
@@ -213,8 +214,11 @@ public class PromotionalContentRuleCacheMgr {
      */
     private void processCriteria(Map<String, Object> criteria, String userGroupId, String userGroupName, String cacheKey) {
         String criteriaKey = (String) criteria.get(Constants.CRITERIA_KEY);
-        List<?> criteriaValues = (List<?>) criteria.get(Constants.CRITERIA_VALUE);
-        if (StringUtils.isEmpty(criteriaKey) || CollectionUtils.isEmpty(criteriaValues)) {
+        Object criteriaValuesObj = criteria.get(Constants.CRITERIA_VALUE);
+        if (criteriaValuesObj instanceof BitSet) {
+            return;
+        }
+        if (StringUtils.isEmpty(criteriaKey) || !(criteriaValuesObj instanceof List<?> criteriaValues) || CollectionUtils.isEmpty(criteriaValues)) {
             log.warn("Missing key or values in criteria for userGroupId {} in rule {}", userGroupId, cacheKey);
             return;
         }
@@ -256,5 +260,74 @@ public class PromotionalContentRuleCacheMgr {
             }
         }
         return bitSet;
+    }
+
+    public void refreshRuleCache(String contextId, String contextIdType, String contextDataJson, boolean archived) {
+        String cacheKey = contextId + "|" + contextIdType;
+        if (archived || StringUtils.isBlank(contextDataJson)) {
+            cacheMap.remove(cacheKey);
+            redisCacheMgr.deleteHashField(PROMOTIONAL_CONTENT_CACHE_KEY, cacheKey);
+            return;
+        }
+
+        CachedAccessSettingRule rule = new CachedAccessSettingRule(contextId, contextIdType, contextDataJson, false);
+        try {
+            processAndCacheRule(rule);
+            cacheMap.put(cacheKey, rule);
+            redisCacheMgr.setHashValue(PROMOTIONAL_CONTENT_CACHE_KEY, cacheKey,
+                    buildRedisRulePayload(contextId, contextIdType, rule.getContextData()));
+        } catch (Exception e) {
+            log.error("Failed to refresh promotional content rule cache for key: {}", cacheKey, e);
+        }
+    }
+
+    public void invalidateAll() {
+        cacheMap.clear();
+    }
+
+    private String buildRedisRulePayload(String contextId, String contextIdType, Map<String, Object> contextData) {
+        try {
+            Map<String, Object> rulePayload = new HashMap<>();
+            rulePayload.put(Constants.CONTEXT_ID, contextId);
+            rulePayload.put(Constants.CONTEXT_ID_TYPE, contextIdType);
+            rulePayload.put(Constants.CONTEXT_DATA, sanitizeContextDataForRedis(contextData));
+            rulePayload.put(Constants.IS_ARCHIVED, false);
+            return OBJECT_MAPPER.writeValueAsString(rulePayload);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize promotional content rule for Redis", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> sanitizeContextDataForRedis(Map<String, Object> contextData) {
+        Map<String, Object> sanitized = OBJECT_MAPPER.convertValue(contextData, Map.class);
+        Object accessControlObj = sanitized.get(Constants.ACCESS_CONTROL_ID);
+        if (!(accessControlObj instanceof Map<?, ?> accessControl)) {
+            return sanitized;
+        }
+        Object userGroupsObj = accessControl.get(Constants.USER_GROUPS);
+        if (!(userGroupsObj instanceof List<?> userGroups)) {
+            return sanitized;
+        }
+        for (Object userGroupObj : userGroups) {
+            if (!(userGroupObj instanceof Map<?, ?> userGroup)) {
+                continue;
+            }
+            Object criteriaListObj = userGroup.get(Constants.USER_GROUP_CRITERIA_LIST);
+            if (!(criteriaListObj instanceof List<?> criteriaList)) {
+                continue;
+            }
+            for (Object criteriaObj : criteriaList) {
+                if (!(criteriaObj instanceof Map<?, ?> criteriaMap)) {
+                    continue;
+                }
+                Object valueObj = criteriaMap.get(Constants.CRITERIA_VALUE);
+                if (valueObj instanceof BitSet bitSet) {
+                    List<Integer> bitSetValues = bitSet.stream().boxed().toList();
+                    ((Map<String, Object>) criteriaMap).put(Constants.CRITERIA_VALUE, bitSetValues);
+                }
+            }
+        }
+        return sanitized;
     }
 }

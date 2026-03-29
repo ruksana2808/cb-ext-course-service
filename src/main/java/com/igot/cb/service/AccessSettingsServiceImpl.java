@@ -1,5 +1,6 @@
 package com.igot.cb.service;
 
+import com.igot.cb.cache.AccessSettingRuleCacheMgr;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,13 +29,16 @@ public class AccessSettingsServiceImpl {
   private final PayloadValidation payloadValidation;
   private final CassandraOperation cassandraOperation;
   private final AccessSettingMigrationServiceImpl accessSettingMigrationService;
+  private final AccessSettingRuleCacheMgr accessSettingRuleCacheMgr;
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   public AccessSettingsServiceImpl(CassandraOperation cassandraOperation, PayloadValidation payloadValidation,
-      AccessSettingMigrationServiceImpl accessSettingMigrationService) {
+      AccessSettingMigrationServiceImpl accessSettingMigrationService,
+      AccessSettingRuleCacheMgr accessSettingRuleCacheMgr) {
     this.cassandraOperation = cassandraOperation;
     this.payloadValidation = payloadValidation;
     this.accessSettingMigrationService = accessSettingMigrationService;
+    this.accessSettingRuleCacheMgr = accessSettingRuleCacheMgr;
   }
 
   public ApiResponse upsert(Map<String, Object> userGroupDetails, String authToken) {
@@ -59,6 +63,11 @@ public class AccessSettingsServiceImpl {
       if (accessSettingMigrationService.processAccessSettingRule(accessRuleData)) {
         cassandraOperation.insertRecord(Constants.KEYSPACE_SUNBIRD_COURSE,
             Constants.ACCESS_SETTINGS_RULES_TABLE_V2, accessRuleData);
+        accessSettingRuleCacheMgr.refreshRuleCache(
+            String.valueOf(accessRuleData.get(Constants.CONTEXT_ID)),
+            String.valueOf(accessRuleData.get(Constants.CONTEXT_ID_TYPE)),
+            String.valueOf(accessRuleData.get(Constants.CONTEXT_DATA)),
+            false);
         response.getResult().put(Constants.MSG, Constants.CREATED_RULES);
         // Remove all other keys, and put a single object after message
         Map<String, Object> payload = new HashMap<>();
@@ -148,6 +157,15 @@ public class AccessSettingsServiceImpl {
       accessRuleData.put(Constants.CONTEXT_ID, contentId);
       accessRuleData.put(Constants.CONTEXT_DATA, "");
       accessRuleData.put(Constants.IS_ARCHIVED, false);
+      if (accessSettingMigrationService.processAccessSettingRule(accessRuleData)) {
+        accessSettingRuleCacheMgr.refreshRuleCache(
+            String.valueOf(accessRuleData.get(Constants.CONTEXT_ID)),
+            String.valueOf(accessRuleData.get(Constants.CONTEXT_ID_TYPE)),
+            "",
+            true);
+      } else {
+        accessSettingRuleCacheMgr.invalidateAll();
+      }
       cassandraOperation.insertRecord(Constants.KEYSPACE_SUNBIRD_COURSE,
           Constants.ACCESS_SETTINGS_RULES_TABLE_V2, accessRuleData);
       response.setResponseCode(HttpStatus.OK);
@@ -221,6 +239,11 @@ public class AccessSettingsServiceImpl {
       if (accessSettingMigrationService.processAccessSettingRule(accessRuleData)) {
         cassandraOperation.insertRecord(Constants.KEYSPACE_SUNBIRD_COURSE,
                 Constants.ACCESS_SETTINGS_RULES_TABLE_V2, accessRuleData);
+        accessSettingRuleCacheMgr.refreshRuleCache(
+                String.valueOf(accessRuleData.get(Constants.CONTEXT_ID)),
+                String.valueOf(accessRuleData.get(Constants.CONTEXT_ID_TYPE)),
+                String.valueOf(accessRuleData.get(Constants.CONTEXT_DATA)),
+                false);
         response.getResult().put(Constants.MSG, Constants.CREATED_RULES);
         Map<String, Object> payload = new HashMap<>();
         payload.put(Constants.ACCESS_CONTROL, createPayloadWithUuid.get(Constants.ACCESS_CONTROL));

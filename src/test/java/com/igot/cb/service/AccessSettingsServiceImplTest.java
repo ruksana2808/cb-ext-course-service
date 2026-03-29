@@ -1,5 +1,6 @@
 package com.igot.cb.service;
 
+import com.igot.cb.cache.AccessSettingRuleCacheMgr;
 import com.igot.cb.util.Constants;
 import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.model.ApiResponse;
@@ -37,9 +38,13 @@ class AccessSettingsServiceImplTest {
   @Mock
   private AccessSettingMigrationServiceImpl accessSettingMigrationService;
 
+  @Mock
+  private AccessSettingRuleCacheMgr accessSettingRuleCacheMgr;
+
   @BeforeEach
   void setUp() {
-    service = new AccessSettingsServiceImpl(cassandraOperation, payloadValidation, accessSettingMigrationService);
+    service = new AccessSettingsServiceImpl(cassandraOperation, payloadValidation, accessSettingMigrationService,
+            accessSettingRuleCacheMgr);
   }
 
   @Test
@@ -133,6 +138,7 @@ class AccessSettingsServiceImplTest {
     assertEquals(Constants.CREATED_RULES, response.getResult().get(Constants.MSG));
     // assertEquals(doId, response.getResult().get("contentId")); // contentId is not present in response
     assertEquals(accessControl, response.getResult().get("accessControl"));
+    verify(accessSettingRuleCacheMgr).refreshRuleCache(anyString(), anyString(), anyString(), eq(false));
   }
 
   @Test
