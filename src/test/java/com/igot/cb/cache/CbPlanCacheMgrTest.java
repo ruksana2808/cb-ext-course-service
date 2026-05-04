@@ -32,6 +32,8 @@ class CbPlanCacheMgrTest {
         // Set the cache TTL and batch size for testing
         ReflectionTestUtils.setField(cbPlanCacheMgr, "ttlMinutes", 60);
         ReflectionTestUtils.setField(cbPlanCacheMgr, "planBatchSize", 5);
+        ReflectionTestUtils.setField(cbPlanCacheMgr, "maxCacheSize", 5000);
+        cbPlanCacheMgr.initCache();
     }
 
     @Test
@@ -52,8 +54,8 @@ class CbPlanCacheMgrTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals(0, result.size()); // Bug in original code - returns empty list on cache hit
-       verify(cassandraOperation, atLeastOnce()).getRecordsByProperties(anyString(), anyString(), anyMap(), anyList(), any());
+        assertEquals(2, result.size());
+        verify(cassandraOperation, never()).getRecordsByProperties(anyString(), anyString(), anyMap(), anyList(), any());
     }
 
     @Test
