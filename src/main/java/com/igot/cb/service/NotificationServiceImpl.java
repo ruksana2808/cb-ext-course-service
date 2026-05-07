@@ -534,4 +534,28 @@ public class NotificationServiceImpl implements NotificationService {
             log.error("Error while sending in-app retirement notification", e);
         }
     }
+
+    @Override
+    public void sendNotificationForExternalTraining(String trainingId, String trainingName, List<String> userIds, String notificationType) {
+        try {
+            if (CollectionUtils.isEmpty(userIds) || StringUtils.isEmpty(notificationType)) {
+                log.warn("Invalid input for content retirement in-app notification");
+                return;
+            }
+            String subCategory = notificationType;
+            Map<String, String> placeHolders = new HashMap<>();
+            placeHolders.put(Constants.COURSE_NAME, trainingName);
+            Map<String, Object> data = new HashMap<>();
+            data.put(Constants.ID, trainingId);
+            Map<String, Object> message = new HashMap<>();
+            message.put(Constants.PLACE_HOLDERS, placeHolders);
+            message.put(Constants.DATA, data);
+            sendInAppNotification(subCategory, Constants.ALERT, userIds, message);
+            log.info("In-app retirement notification [{}] sent for course {}",
+                    notificationType, trainingName);
+        } catch (Exception e) {
+            log.error("Error while sending in-app retirement notification", e);
+        }
+
+    }
 }
