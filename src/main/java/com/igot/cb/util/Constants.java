@@ -596,6 +596,10 @@ public class Constants {
     public static final String API_CONTENT_HEALTH_SUMMARY = "api.content.health.summary";
     public static final String HEALTH_SCORE = "health_score";
     public static final String INDICATORS = "indicators";
+    
+    // Content Dictionary Constants
+    public static final String REDIS_CONTENT_DICTIONARY_KEY = "content_dictionary";
+    public static final String API_CONTENT_DICTIONARY_READ = "api.content.dictionary.read";
 
     private Constants() {
     }
