@@ -599,6 +599,10 @@ public class Constants {
     public static final String USER_CONTENT_CONSUMPTION_V2 = "user_content_consumption_v2";
     public static final String API_USER_CONTENT_CONSUMPTION_V2_READ = "api.chatbot.user.content.consumption.v2.read";
     public static final String CONSUMPTION_RECORDS = "consumptionRecords";
+    
+    // Content Dictionary Constants
+    public static final String REDIS_CONTENT_DICTIONARY_KEY = "content_dictionary";
+    public static final String API_CONTENT_DICTIONARY_READ = "api.content.dictionary.read";
 
     private Constants() {
     }
