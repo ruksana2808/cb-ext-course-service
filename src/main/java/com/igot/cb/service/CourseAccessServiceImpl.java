@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.igot.cb.cache.RedisCacheMgr;
+import com.igot.cb.cassandra.CassandraOperation;
 import com.igot.cb.cassandra.exceptions.CustomException;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.kafka.common.protocol.types.Field;
@@ -27,6 +28,8 @@ import com.igot.cb.util.Constants;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static com.igot.cb.util.Constants.*;
+
 /**
  * Service implementation for managing course access based on user profiles and access setting rules.
  */
@@ -38,6 +41,9 @@ public class CourseAccessServiceImpl {
     private final AccessSettingRuleCacheMgr accessSettingRuleCacheMgr;
     private final ContentInfoServiceImpl contentService;
     private final OutboundRequestHandlerServiceImpl outboundRequestHandlerService;
+    private final ObjectMapper objectMapper;
+    private final CbPlanLearnerServiceImpl cbPlanLearnerService;
+    private final CassandraOperation cassandraOperation;
 
     @Autowired
     private RedisCacheMgr redisCacheMgr;
@@ -79,6 +85,15 @@ public class CourseAccessServiceImpl {
     @Value("${access.course.cache.ttl.seconds:600}")
     private Integer accessCacheTtlSecods;
 
+    @Value("${moderated.course.search.request}")
+    private String moderatedCourseSearchRequest;
+
+    @Value("${enrolment.dictionary.url}")
+    private String enrolmentDictionaryUrl;
+
+    @Value("${lms.host}")
+    private String lmsServiceHost;
+
     private final Map<String, List<String>> courseCategoryCache = new ConcurrentHashMap<>();
     private final Map<String, Long> cacheTimestamps = new ConcurrentHashMap<>();
 
@@ -92,12 +107,15 @@ public class CourseAccessServiceImpl {
      * @param accessSettingRuleCacheMgr Cache manager for access setting rules.
      */
     public CourseAccessServiceImpl(AccessTokenValidator accessTokenValidator,
-                                   UserAndOrgServiceImpl userProfileServiceImpl, AccessSettingRuleCacheMgr accessSettingRuleCacheMgr, ContentInfoServiceImpl contentService, OutboundRequestHandlerServiceImpl outboundRequestHandlerService1) {
+                                   UserAndOrgServiceImpl userProfileServiceImpl, AccessSettingRuleCacheMgr accessSettingRuleCacheMgr, ContentInfoServiceImpl contentService, OutboundRequestHandlerServiceImpl outboundRequestHandlerService1, CbPlanLearnerServiceImpl cbPlanLearnerService, CassandraOperation cassandraOperation) {
         this.accessTokenValidator = accessTokenValidator;
         this.userProfileServiceImpl = userProfileServiceImpl;
         this.accessSettingRuleCacheMgr = accessSettingRuleCacheMgr;
         this.contentService = contentService;
         this.outboundRequestHandlerService = outboundRequestHandlerService1;
+        this.objectMapper = new ObjectMapper();
+        this.cbPlanLearnerService = cbPlanLearnerService;
+        this.cassandraOperation = cassandraOperation;
     }
 
     /**
@@ -586,6 +604,208 @@ public class CourseAccessServiceImpl {
             }
         }
         return contentIds;
+    }
+
+    public ApiResponse getPersonalContentInfo(String authToken) {
+        ApiResponse response = ApiResponse.createDefaultResponse(Constants.API_PERSONAL_CONTENT_INFO);
+        try {
+            Map<String, Object> tokenData = accessTokenValidator.fetchUserIdAndOrg(authToken);
+            String userId = (String) tokenData.get("userId");
+            String orgId = (String) tokenData.get("org");
+            if (!StringUtils.hasText(userId)) {
+                response.getParams().setStatus(Constants.FAILED);
+                response.setResponseCode(HttpStatus.UNAUTHORIZED);
+                response.getParams().setErrMsg("Invalid auth token");
+                return response;
+            }
+            Map<String, Object> result = new HashMap<>();
+            result.putAll(org.apache.commons.lang3.StringUtils.isNotBlank(userId) ? getPersonalContentInfoFromCacheOrApi(userId, orgId, authToken) : Collections.emptyMap());
+            result.put(MODERATED_CONTENT, getModeratedContentCount(userId, orgId));
+            response.setResult(result);
+            return response;
+        } catch (Exception e) {
+            log.error("Error fetching personal content info: {}", e.getMessage(), e);
+            response.getParams().setStatus(Constants.FAILED);
+            response.setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR);
+            response.getParams().setErrMsg("Failed to fetch personal content info: " + e.getMessage());
+            return response;
+        }
+    }
+
+    private Map<String, Object> getPersonalContentInfoFromCacheOrApi(String userId, String orgId, String authToken) throws Exception {
+        String redisKey = Constants.PERSONAL_CONTENT_INFO_REDIS_KEY_PREFIX + userId;
+        String cached = redisCacheMgr.getFromCache(redisKey);
+        if (StringUtils.hasText(cached)) {
+            log.info("personalContentInfo cache HIT for userId: {}", userId);
+            return objectMapper.readValue(cached, new TypeReference<Map<String, Object>>() {});
+        }
+        log.info("personalContentInfo cache MISS for userId: {}", userId);
+        Map<String, Object> contentInfoMap = buildPersonalContentInfo(userId, orgId, authToken);
+        redisCacheMgr.putInCache(redisKey, objectMapper.writeValueAsString(contentInfoMap));
+        log.info("personalContentInfo cached for userId: {}", userId);
+        return contentInfoMap;
+    }
+
+    private Map<String, Object> buildPersonalContentInfo(String userId, String orgId, String authToken) throws Exception {
+        int aparCount = 0;
+        int trainingPlanCount = 0;
+        ApiResponse cbPlanResponse = cbPlanLearnerService.getCBPlanListForUser(orgId, userId, true);
+        if (cbPlanResponse != null
+                && cbPlanResponse.getResult() != null
+                && cbPlanResponse.getResult().containsKey(Constants.CONTENT)) {
+            List<Map<String, Object>> plans = (List<Map<String, Object>>)
+                    cbPlanResponse.getResult().get(Constants.CONTENT);
+            if (!CollectionUtils.isEmpty(plans)) {
+                aparCount = (int) plans.stream()
+                        .filter(p -> Boolean.TRUE.equals(p.get(Constants.IS_APAR)))
+                        .count();
+                trainingPlanCount = (int) plans.stream()
+                        .filter(p -> !Boolean.TRUE.equals(p.get(Constants.IS_APAR)))
+                        .count();
+            }
+        }
+        int lpCount = getAssignedCourseCount(userId, Constants.LEARNING_PATHWAY, authToken);
+        Map<String, Map<String, Object>> enrolmentDictionary = callEnrolmentDictionaryApi(authToken);
+        int caProgramCount = getCaProgramCount(enrolmentDictionary);
+        int standaloneCount = getStandaloneAssessmentCount(enrolmentDictionary);
+        Map<String, Object> map = new HashMap<>();
+        map.put(Constants.TRAINING_PLAN, trainingPlanCount);
+        map.put(Constants.APAR, aparCount);
+        map.put(CA_PROGRAM, caProgramCount);
+        map.put(LEARNING_PATHWAY_FIELD, lpCount);
+        map.put(STANDALONE_ASSESSMENT, standaloneCount);
+        return map;
+    }
+
+    private int getModeratedContentCount(String userId, String orgId) throws Exception {
+        String redisKey = Constants.MODERATED_COURSE_COUNT_REDIS_KEY_PREFIX + userId;
+        String cached = redisCacheMgr.getFromCache(redisKey);
+
+        Map<String, Object> moderatedMap = new HashMap<>();
+
+        if (StringUtils.hasText(cached)) {
+            moderatedMap = objectMapper.readValue(
+                    cached, new TypeReference<Map<String, Object>>() {});
+            if (moderatedMap.containsKey(orgId)) {
+                log.info("moderatedCourseCount cache HIT for userId: {} orgId: {}", userId, orgId);
+                return (int) moderatedMap.get(orgId);
+            }
+            log.info("orgId not in map for userId: {}, calling search API", userId);
+        } else {
+            log.info("moderatedCourseCount cache MISS for userId: {}", userId);
+        }
+        int count = getModeratedCourseCount(orgId);
+        moderatedMap.put(orgId, count);
+        redisCacheMgr.putInCache(redisKey,
+                objectMapper.writeValueAsString(moderatedMap));
+        log.info("moderatedCourseCount updated in Redis for userId: {} orgId: {}", userId, orgId);
+
+        return count;
+    }
+
+    private int getAssignedCourseCount(String userId, String courseCategory, String authToken) {
+        try {
+            Map<String, Object> request = new HashMap<>();
+            request.put(Constants.COURSE_CATEGORY, courseCategory);
+            ApiResponse response = getAssignedCoursesForUserByAdmin(userId, request, authToken);
+            if (response != null && response.getResult() != null) {
+                List<Map<String, Object>> courses = (List<Map<String, Object>>)
+                        response.getResult().get(Constants.CONTENT);
+                return CollectionUtils.isEmpty(courses) ? 0 : courses.size();
+            }
+        } catch (Exception e) {
+            log.error("Error fetching count for courseCategory: {}, userId: {}, error: {}",
+                    courseCategory, userId, e.getMessage());
+        }
+        return 0;
+    }
+
+    private int getModeratedCourseCount(String orgId) {
+        try {
+            String requestBody = String.format(moderatedCourseSearchRequest, orgId);
+            Map<String, Object> requestMap = objectMapper.readValue(
+                    requestBody, new TypeReference<Map<String, Object>>() {});
+            String searchUrl = sbSearchServiceHost + sbCompositeV4Search;
+            Map<String, Object> searchResponse = outboundRequestHandlerService
+                    .fetchResultUsingPost(searchUrl, requestMap, null);
+            if (MapUtils.isNotEmpty(searchResponse)) {
+                Map<String, Object> result = (Map<String, Object>) searchResponse.get(Constants.RESULT);
+                if (result != null && result.containsKey(Constants.COUNT)) {
+                    return ((Number) result.get(Constants.COUNT)).intValue();
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error fetching moderated course count for orgId: {}, error: {}",
+                    orgId, e.getMessage());
+        }
+        return 0;
+    }
+
+    private Map<String, Map<String, Object>> callEnrolmentDictionaryApi(
+            String userToken) throws Exception {
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put(X_AUTH_TOKEN, userToken);
+
+        Map<String, Object> apiResponse =
+                outboundRequestHandlerService.fetchResultUsingGet(
+                        lmsServiceHost + enrolmentDictionaryUrl,
+                        headers);
+
+        if (MapUtils.isEmpty(apiResponse)) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, Object> result =
+                (Map<String, Object>) apiResponse.get(Constants.RESULT);
+
+        if (result == null || result.get(Constants.RESPONSE) == null) {
+            return Collections.emptyMap();
+        }
+
+        return (Map<String, Map<String, Object>>) result.get(Constants.RESPONSE);
+    }
+
+    private boolean isStandaloneAssessment(Map<String, Object> item) {
+        return Constants.PRIMARY_CATEGORY_STANDALONE_ASSESSMENT.equals(item.get(PRIMARY_CATEGORY))
+                && Constants.COURSE_CATEGORY_INVITE_ONLY_ASSESSMENT
+                .equalsIgnoreCase(String.valueOf(item.get(COURSE_CATEGORY)));
+    }
+
+    private boolean isCAProgram(Map<String, Object> item) {
+        return Constants.COURSE_CATEGORY_COMPREHENSIVE_ASSESSMENT_PROGRAM
+                .equalsIgnoreCase(String.valueOf(item.get(COURSE_CATEGORY)));
+    }
+
+    private boolean isActiveInProgress(Map<String, Object> enrolment) {
+        Number status = (Number) enrolment.get(Constants.STATUS);
+
+        return Boolean.TRUE.equals(enrolment.get(Constants.ACTIVE))
+                && status != null
+                && (status.intValue() == 0 || status.intValue() == 1);
+    }
+
+    private int getStandaloneAssessmentCount(
+            Map<String, Map<String, Object>> enrolmentDictionary) {
+        if (MapUtils.isEmpty(enrolmentDictionary)) {
+            return 0;
+        }
+        return (int) enrolmentDictionary.values()
+                .stream()
+                .filter(this::isActiveInProgress)
+                .filter(this::isStandaloneAssessment)
+                .count();
+    }
+
+    private int getCaProgramCount(Map<String, Map<String, Object>> enrolmentDictionary) {
+        if (MapUtils.isEmpty(enrolmentDictionary)) {
+            return 0;
+        }
+        return (int) enrolmentDictionary.values()
+                .stream()
+                .filter(this::isActiveInProgress)
+                .filter(this::isCAProgram)
+                .count();
     }
 
 }
