@@ -50,7 +50,7 @@ class CbPlanDataTransformServiceV3ImplTest {
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put(Constants.NAME, "planName");
         requestMap.put(Constants.CONTENT_LIST, List.of("content1"));
-        requestMap.put(Constants.PLAN_YEAR, "2026-27");
+        requestMap.put(Constants.REQUEST_PARAM_PLAN_YEAR, "2026-27");
         Map<String, Object> result = dataTransformService.prepareCbPlanForInsert(apiRequest(requestMap), USER_ID);
         assertNotNull(result.get(Constants.PLAN_ID));
         assertEquals(USER_ID, result.get(Constants.CREATED_BY));
@@ -248,4 +248,30 @@ class CbPlanDataTransformServiceV3ImplTest {
     void testConstructor() {
         assertNotNull(new CbPlanDataTransformServiceV3Impl(serverProperties));
     }
+
+    @Test
+    void testPrepareCbPlanForInsertMapsRequestPlanYearToColumnKey() throws JsonProcessingException {
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put(Constants.REQUEST_PARAM_PLAN_YEAR, "2026-27");
+        Map<String, Object> result = dataTransformService.prepareCbPlanForInsert(apiRequest(requestMap), USER_ID);
+        assertEquals("2026-27", result.get(Constants.PLAN_YEAR));
+        assertFalse(result.containsKey(Constants.REQUEST_PARAM_PLAN_YEAR));
+    }
+
+    @Test
+    void testPrepareCbPlanForInsertIgnoresColumnStylePlanYearInRequest() throws JsonProcessingException {
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put(Constants.PLAN_YEAR, "2026-27");
+        Map<String, Object> result = dataTransformService.prepareCbPlanForInsert(apiRequest(requestMap), USER_ID);
+        assertNull(result.get(Constants.PLAN_YEAR));
+    }
+
+    @Test
+    void testPrepareCbPlanForUpdateMapsRequestPlanYearToColumnKey() throws JsonProcessingException {
+        Map<String, Object> incomingRequest = new HashMap<>();
+        incomingRequest.put(Constants.REQUEST_PARAM_PLAN_YEAR, "2026-27");
+        Map<String, Object> result = dataTransformService.prepareCbPlanForUpdate(incomingRequest, USER_ID);
+        assertEquals("2026-27", result.get(Constants.PLAN_YEAR));
+    }
+
 }
