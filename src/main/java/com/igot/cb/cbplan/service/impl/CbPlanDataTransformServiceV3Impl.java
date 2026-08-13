@@ -185,7 +185,7 @@ public class CbPlanDataTransformServiceV3Impl {
         cbPlan.put(Constants.CONTENT_TYPE, requestMap.get(Constants.CONTENT_TYPE));
         cbPlan.put(Constants.END_DATE_REQUEST, parseEndDate(requestMap.get(Constants.END_DATE_REQUEST)));
         cbPlan.put(Constants.CONTEXT_DATA_REQUEST, mapper.writeValueAsString(requestMap.get(Constants.CONTEXT_DATA_REQUEST)));
-        cbPlan.put(Constants.PLAN_YEAR, requestMap.get(Constants.PLAN_YEAR));
+        cbPlan.put(Constants.PLAN_YEAR, requestMap.get(Constants.REQUEST_PARAM_PLAN_YEAR));
         if (requestMap.containsKey(Constants.PLAN_TYPE)) {
             cbPlan.put(Constants.PLAN_TYPE, requestMap.get(Constants.PLAN_TYPE));
         }
@@ -203,7 +203,7 @@ public class CbPlanDataTransformServiceV3Impl {
         updatedRequest.put(Constants.END_DATE_REQUEST, parseEndDate(incomingRequest.get(Constants.END_DATE_REQUEST)));
         updatedRequest.put(Constants.CONTEXT_DATA_REQUEST,
                 mapper.writeValueAsString(incomingRequest.get(Constants.CONTEXT_DATA_REQUEST)));
-        updatedRequest.put(Constants.PLAN_YEAR, incomingRequest.get(Constants.PLAN_YEAR));
+        updatedRequest.put(Constants.PLAN_YEAR, incomingRequest.get(Constants.REQUEST_PARAM_PLAN_YEAR));
         if (incomingRequest.containsKey(Constants.PLAN_TYPE)) {
             updatedRequest.put(Constants.PLAN_TYPE, incomingRequest.get(Constants.PLAN_TYPE));
         }
