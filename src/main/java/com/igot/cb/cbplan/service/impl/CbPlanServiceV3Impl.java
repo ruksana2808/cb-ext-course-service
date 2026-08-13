@@ -476,6 +476,10 @@ public class CbPlanServiceV3Impl implements CbPlanServiceV3 {
     private void executePublishTransaction(String cbPlanId, String planYear, Map<String, Object> updatedRequest,
                                            Map<String, Object> existingCbPlan, String existingStatus,
                                            ApiResponse response) {
+        Set<String> existingRootOrgIds = (Set<String>) updatedRequest.get(Constants.EXISTING_ROOT_ORG_IDS);
+        Set<String> newRootOrgIds = (Set<String>) updatedRequest.get(Constants.NEW_ROOT_ORG_IDS);
+        updatedRequest.remove(Constants.EXISTING_ROOT_ORG_IDS);
+        updatedRequest.remove(Constants.NEW_ROOT_ORG_IDS);
         Map<String, Object> sanitizedMap = elasticSearchService.sanitizeForElastic(updatedRequest);
         Map<String, Object> sanitizedExisting = elasticSearchService.sanitizeForElastic(existingCbPlan);
         Map<String, Object> resp = cassandraOperation.updateRecord(
@@ -495,6 +499,8 @@ public class CbPlanServiceV3Impl implements CbPlanServiceV3 {
                     }
                 });
         if (Constants.SUCCESS.equals(resp.get(Constants.RESPONSE))) {
+            updatedRequest.put(Constants.EXISTING_ROOT_ORG_IDS, existingRootOrgIds);
+            updatedRequest.put(Constants.NEW_ROOT_ORG_IDS, newRootOrgIds);
             updateOrgLookupTables(cbPlanId, planYear, updatedRequest, existingCbPlan, existingStatus, response);
         } else {
             response.getParams().setStatus(Constants.FAILED);
