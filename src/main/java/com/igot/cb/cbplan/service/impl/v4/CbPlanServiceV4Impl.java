@@ -1253,10 +1253,8 @@ public class CbPlanServiceV4Impl implements CbPlanServiceV4 {
             if (isPlanAlreadyRetired(existingCbPlan, cbPlanId, response)) {
                 return response;
             }
-            if (isPlanLinkedToCa(existingCbPlan, cbPlanId, response)) {
-                return response;
-            }
             executeRetirePlan(cbPlanId, comment, userId, existingCbPlan, response);
+            addCaLinkedWarningIfApplicable(existingCbPlan, response);
         } catch (Exception e) {
             log.error("CbPlanServiceV4Impl.retireCbPlan: Failed to archive CB Plan", e);
             response.getParams().setStatus(Constants.FAILED);
@@ -1821,29 +1819,6 @@ public class CbPlanServiceV4Impl implements CbPlanServiceV4 {
     }
 
     /**
-     * Blocks retire if the plan is linked to a Comprehensive Assessment.
-     * Removing the CA link ({@code caLinkedId}) must happen before archiving.
-     *
-     * @param existingCbPlan plan record from Cassandra
-     * @param cbPlanId       plan ID for logging
-     * @param response       API response to populate on failure
-     * @return true if plan has an active CA link (retire must be blocked), false otherwise
-     */
-    private boolean isPlanLinkedToCa(Map<String, Object> existingCbPlan, String cbPlanId,
-                                     ApiResponse response) {
-        String caLinkedId = (String) existingCbPlan.get(Constants.CA_LINKED_ID_DB);
-        if (StringUtils.isBlank(caLinkedId)) {
-            return false;
-        }
-        log.warn("CbPlanServiceV4Impl.isPlanLinkedToCa: Retire blocked — plan is linked to CA. cbPlanId={}, caLinkedId={}", cbPlanId, caLinkedId);
-        response.getParams().setStatus(Constants.FAILED);
-        response.getParams().setErr(serverProperties.getCbPlanV4RetireCaLinkedError());
-        response.setResponseCode(HttpStatus.BAD_REQUEST);
-        return true;
-    }
-
-
-    /**
      * Updates {@code calinkedid} on the CB Plan in Cassandra and syncs the change to ElasticSearch.
      * Invalidates the per-plan Caffeine cache entry and asynchronously deletes Redis dictionary
      * cache keys scoped to the plan's owning org ({@code orgIdList[0]}).
@@ -1882,5 +1857,15 @@ public class CbPlanServiceV4Impl implements CbPlanServiceV4 {
         log.info("CbPlanServiceV4Impl.updateCaLinkedIdV2: Updated - cbPlanId={}, caLinkedId={}, updatedBy={}, orgId={}",
                 cbPlanId, caLinkedId, updatedBy, orgId);
         return true;
+    }
+
+    private void addCaLinkedWarningIfApplicable(Map<String, Object> existingCbPlan, ApiResponse response) {
+        if (!Constants.SUCCESSFUL.equals(response.getParams().getStatus())) {
+            return;
+        }
+        String caLinkedId = (String) existingCbPlan.get(Constants.CA_LINKED_ID_DB);
+        if (StringUtils.isNotBlank(caLinkedId)) {
+            response.getResult().put(Constants.WARNING, serverProperties.getCbPlanV4CaLinkedRetireWarning());
+        }
     }
 }

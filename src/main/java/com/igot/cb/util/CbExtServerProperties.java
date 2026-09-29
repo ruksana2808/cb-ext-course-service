@@ -220,14 +220,17 @@ public class CbExtServerProperties {
     @Value("${usergroup.allow.multiple.root.org.ids:false}")
     private boolean userGroupAllowMultipleRootOrgIds;
 
+    @Value("${usergroup.allow.empty.root.org.ids:false}")
+    private boolean userGroupAllowEmptyRootOrgIds;
+
     @Value("${cbplan.content.sync.async:true}")
     private boolean cbPlanContentSyncAsync;
 
-    @Value("${cbplan.v4.retire.ca.linked.error}")
-    private String cbPlanV4RetireCaLinkedError;
-
     @Value("${cb.plan.v4.dictionary.redis.cache.ttl.seconds:3600}")
     private int cbPlanV4DictionaryRedisCacheTtlSeconds;
+
+    @Value("${cbplan.v4.retire.ca.linked.warning}")
+    private String cbPlanV4CaLinkedRetireWarning;
 
     public List<String> getCbPlanEnrichedContentFieldsList() {
         return Arrays.asList(cbPlanEnrichedContentFields.split(",", -1));
