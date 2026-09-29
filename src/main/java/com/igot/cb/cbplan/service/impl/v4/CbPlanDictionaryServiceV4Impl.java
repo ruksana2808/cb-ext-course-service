@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.igot.cb.cache.CbPlanCacheMgrV4;
 import com.igot.cb.cache.RedisCacheMgr;
+import com.igot.cb.cache.UserGroupCacheMgrV4;
 import com.igot.cb.cbplan.service.impl.CbPlanContentLookupServiceV3Impl;
 import com.igot.cb.cbplan.service.impl.CbPlanDataTransformServiceV3Impl;
 import com.igot.cb.cbplan.service.impl.CbPlanEnrichmentServiceV3Impl;
@@ -55,7 +56,7 @@ public class CbPlanDictionaryServiceV4Impl {
 
     private final CassandraOperation cassandraOperation;
     private final CbPlanCacheMgrV4 cbPlanCacheMgrV4;
-    private final CbPlanUserGroupLookupServiceV4Impl userGroupLookupService;
+    private final UserGroupCacheMgrV4 userGroupCacheMgrV4;
     private final AccessTokenValidator accessTokenValidator;
     private final RedisCacheMgr redisCacheMgr;
     private final CbExtServerProperties serverProperties;
@@ -67,7 +68,7 @@ public class CbPlanDictionaryServiceV4Impl {
 
     public CbPlanDictionaryServiceV4Impl(CassandraOperation cassandraOperation,
                                          CbPlanCacheMgrV4 cbPlanCacheMgrV4,
-                                         CbPlanUserGroupLookupServiceV4Impl userGroupLookupService,
+                                         UserGroupCacheMgrV4 userGroupCacheMgrV4,
                                          AccessTokenValidator accessTokenValidator,
                                          RedisCacheMgr redisCacheMgr,
                                          CbExtServerProperties serverProperties,
@@ -76,7 +77,7 @@ public class CbPlanDictionaryServiceV4Impl {
                                          CbPlanContentLookupServiceV3Impl contentLookupService) {
         this.cassandraOperation = cassandraOperation;
         this.cbPlanCacheMgrV4 = cbPlanCacheMgrV4;
-        this.userGroupLookupService = userGroupLookupService;
+        this.userGroupCacheMgrV4 = userGroupCacheMgrV4;
         this.accessTokenValidator = accessTokenValidator;
         this.redisCacheMgr = redisCacheMgr;
         this.serverProperties = serverProperties;
@@ -112,18 +113,18 @@ public class CbPlanDictionaryServiceV4Impl {
             if (Objects.isNull(planYear)) {
                 return response;
             }
-            String cacheKey = Constants.CB_PLAN_V4_REDIS_KEY_PREFIX + userId + ":" + planYear + ":dict";
-            String cachedJson = redisCacheMgr.getFromCache(cacheKey);
-            if (StringUtils.isNotBlank(cachedJson)) {
-                log.info("getCBPlanDictionaryForUser: Cache hit - userId={}, planYear={}", userId, planYear);
-                populateResponseFromCache(response, cachedJson, planYear);
-                return response;
-            }
             Map<String, String> userProfile = buildUserProfile(userId, response);
             if (userProfile.isEmpty()) {
                 return response;
             }
             String userOrgId = userProfile.get(Constants.USER_ROOT_ORG_ID);
+            String cacheKey = Constants.CB_PLAN_V4_REDIS_KEY_PREFIX + userOrgId + ":" + userId + ":" + planYear + ":dict";
+            String cachedJson = redisCacheMgr.getFromCache(cacheKey);
+            if (StringUtils.isNotBlank(cachedJson)) {
+                log.info("getCBPlanDictionaryForUser: Cache hit - userId={}, orgId={}, planYear={}", userId, userOrgId, planYear);
+                populateResponseFromCache(response, cachedJson, planYear);
+                return response;
+            }
             log.info("getCBPlanDictionaryForUser: Cache miss - userId={}, orgId={}, planYear={}", userId, userOrgId, planYear);
             AtomicBoolean isCacheEnabled = new AtomicBoolean(false);
             List<Map<String, Object>> activePlans = fetchPlansForUser(userProfile, userOrgId, planYear, isCacheEnabled);
@@ -249,7 +250,7 @@ public class CbPlanDictionaryServiceV4Impl {
      */
     private Map<String, Object> resolveYearResult(String userId, Map<String, String> userProfile,
             String userOrgId, String planYear, AtomicBoolean isCacheEnabled) {
-        String cacheKey = Constants.CB_PLAN_V4_REDIS_KEY_PREFIX + userId + ":" + planYear + ":dict";
+        String cacheKey = Constants.CB_PLAN_V4_REDIS_KEY_PREFIX + userOrgId + ":" + userId + ":" + planYear + ":dict";
         String cachedJson = redisCacheMgr.getFromCache(cacheKey);
         if (StringUtils.isNotBlank(cachedJson)) {
             try {
@@ -299,7 +300,7 @@ public class CbPlanDictionaryServiceV4Impl {
                 }
             }
         }
-        return null;
+        return Collections.emptyMap();
     }
 
     /**
@@ -483,7 +484,7 @@ public class CbPlanDictionaryServiceV4Impl {
                 totalGroups, orgToGroupIds.size());
         Map<String, Map<String, Object>> groups = new HashMap<>();
         for (Map.Entry<String, Set<String>> entry : orgToGroupIds.entrySet()) {
-            groups.putAll(userGroupLookupService.fetchUserGroupsByIds(
+            groups.putAll(userGroupCacheMgrV4.fetchUserGroupsByIds(
                     new ArrayList<>(entry.getValue()), entry.getKey()));
         }
         normalizeCriteriaKeysInGroups(groups);
@@ -860,7 +861,7 @@ public class CbPlanDictionaryServiceV4Impl {
         }
         try {
             String json = mapper.writeValueAsString(result);
-            redisCacheMgr.putInCache(cacheKey, json, serverProperties.getCbPlanV3RedisCacheTtlSeconds());
+            redisCacheMgr.putInCache(cacheKey, json, serverProperties.getCbPlanV4DictionaryRedisCacheTtlSeconds());
             log.debug("cacheResult: Cached dictionary result - key={}", cacheKey);
         } catch (JsonProcessingException e) {
             log.warn("cacheResult: Failed to serialize result for caching - key={}", cacheKey, e);
