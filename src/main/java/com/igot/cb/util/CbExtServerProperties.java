@@ -232,6 +232,36 @@ public class CbExtServerProperties {
     @Value("${cbplan.v4.retire.ca.linked.warning}")
     private String cbPlanV4CaLinkedRetireWarning;
 
+    @Value("${cbplan.redis.host:localhost}")
+    private String cbPlanRedisHost;
+
+    @Value("${cbplan.redis.port:6379}")
+    private int cbPlanRedisPort;
+
+    @Value("${cbplan.redis.db.index:0}")
+    private int cbPlanRedisDbIndex;
+
+    @Value("${userprofile.redis.host:localhost}")
+    private String userProfileRedisHost;
+
+    @Value("${userprofile.redis.port:6379}")
+    private int userProfileRedisPort;
+
+    @Value("${userprofile.redis.db.index:0}")
+    private int userProfileRedisDbIndex;
+
+    @Value("${extcontent.redis.host:localhost}")
+    private String extContentRedisHost;
+
+    @Value("${extcontent.redis.port:6379}")
+    private int extContentRedisPort;
+
+    @Value("${extcontent.redis.db.index:0}")
+    private int extContentRedisDbIndex;
+
+    @Value("${cbplan.v4.cache.invalidate.async:true}")
+    private boolean cbPlanV4CacheInvalidateAsync;
+
     public List<String> getCbPlanEnrichedContentFieldsList() {
         return Arrays.asList(cbPlanEnrichedContentFields.split(",", -1));
     }
