@@ -144,14 +144,14 @@ class CbPlanDictionaryServiceV4ImplTest {
         String cachedUserProfile = "{\"id\":\"" + TEST_USER_ID + "\",\"rootOrgId\":\"" + TEST_ORG_ID + "\"}";
         String dictCacheKey = Constants.CB_PLAN_V4_REDIS_KEY_PREFIX + TEST_ORG_ID + ":" + TEST_USER_ID + ":" + TEST_PLAN_YEAR + ":dict";
         String cachedJson = "{\"" + TEST_PLAN_YEAR + "\":{\"aparPlanList\":{},\"nonAparPlanList\":{}}}";
-        when(userProfileRedisCacheMgr.getFromCache(eq(userCacheKey))).thenReturn(cachedUserProfile);
-        when(redisCacheMgr.getFromCache(eq(dictCacheKey))).thenReturn(cachedJson);
+        when(userProfileRedisCacheMgr.getFromCache(userCacheKey)).thenReturn(cachedUserProfile);
+        when(redisCacheMgr.getFromCache(dictCacheKey)).thenReturn(cachedJson);
 
         ApiResponse response = dictionaryService.getCBPlanDictionaryForUser(testRequest, TEST_AUTH_TOKEN);
 
         assertThat(response.getResponseCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getResult()).containsKey(TEST_PLAN_YEAR);
-        verify(redisCacheMgr, times(1)).getFromCache(eq(dictCacheKey));
+        verify(redisCacheMgr, times(1)).getFromCache(dictCacheKey);
         verifyNoInteractions(cassandraOperation, cbPlanCacheMgrV4);
     }
 
@@ -448,8 +448,8 @@ class CbPlanDictionaryServiceV4ImplTest {
         String dictCacheKey = Constants.CB_PLAN_V4_REDIS_KEY_PREFIX + TEST_ORG_ID + ":" + TEST_USER_ID + ":" + TEST_PLAN_YEAR + ":dict";
         String cachedUserProfile = "{\"id\":\"" + TEST_USER_ID + "\",\"rootOrgId\":\"" + TEST_ORG_ID + "\"}";
 
-        when(userProfileRedisCacheMgr.getFromCache(eq(userCacheKey))).thenReturn(cachedUserProfile);
-        when(redisCacheMgr.getFromCache(eq(dictCacheKey))).thenReturn(null);
+        when(userProfileRedisCacheMgr.getFromCache(userCacheKey)).thenReturn(cachedUserProfile);
+        when(redisCacheMgr.getFromCache(dictCacheKey)).thenReturn(null);
 
         when(cbPlanCacheMgrV4.getCbPlanForAllAndOrgId(eq(TEST_ORG_ID), eq(TEST_PLAN_YEAR), any(AtomicBoolean.class)))
                 .thenReturn(Collections.emptyList());
@@ -458,7 +458,7 @@ class CbPlanDictionaryServiceV4ImplTest {
         ApiResponse response = dictionaryService.getCBPlanDictionaryForUser(testRequest, TEST_AUTH_TOKEN);
 
         assertThat(response.getResponseCode()).isEqualTo(HttpStatus.OK);
-        verify(userProfileRedisCacheMgr, times(1)).getFromCache(eq(userCacheKey));
+        verify(userProfileRedisCacheMgr, times(1)).getFromCache(userCacheKey);
         verify(cassandraOperation, never()).getRecordsByProperties(
                 eq(Constants.KEYSPACE_SUNBIRD),
                 eq(Constants.USER),
